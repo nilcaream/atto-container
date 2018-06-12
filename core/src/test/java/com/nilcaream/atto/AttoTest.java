@@ -6,6 +6,7 @@ import com.nilcaream.atto.example.ExampleImplementationBlue;
 import com.nilcaream.atto.example.ExampleImplementationGreen;
 import com.nilcaream.atto.example.MultipleImplementations;
 import com.nilcaream.atto.example.PrivateConstructor;
+import com.nilcaream.atto.example.SingletonImplementation;
 import org.junit.jupiter.api.Test;
 
 import java.util.stream.Stream;
@@ -103,5 +104,19 @@ class AttoTest {
         assertSame(instance.getCyclicDependencies1().getCyclicDependencies3(), instance.getCyclicDependencies3());
         assertSame(instance.getCyclicDependencies2().getCyclicDependencies3(), instance.getCyclicDependencies3());
         assertSame(instance.getCyclicDependencies3(), instance.getCyclicDependencies3().getCyclicDependencies3());
+    }
+
+    @Test
+    void shouldInjectFieldsOfAbstractClass() {
+        // when
+        SingletonImplementation instance = underTest.instance(SingletonImplementation.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getRegularPrototype());
+        assertNotNull(instance.getRegularPrototypeSub());
+        assertNotNull(instance.getRegularSingletonSub());
+
+        assertNotSame(instance.getRegularPrototype(), instance.getRegularPrototypeSub());
     }
 }

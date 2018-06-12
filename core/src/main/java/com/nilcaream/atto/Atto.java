@@ -5,8 +5,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Atto {
 
-    private Scanner scanner;
-    private final Map<Descriptor, Object> singletons = new ConcurrentHashMap<>();
+    private Scanner scanner = new Scanner();
+    private Injector injector = new Injector();
+    private Map<Descriptor, Object> singletons = new ConcurrentHashMap<>();
 
     public <T> T instance(Class<T> cls) {
         return null;

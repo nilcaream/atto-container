@@ -8,16 +8,22 @@ class Scanner {
 
     private Reflections reflections;
 
+    private boolean available = true;
+
     {
         try {
             Class.forName("org.reflections.Reflections");
+            reflections = new Reflections();
         } catch (ClassNotFoundException e) {
-            throw new IllegalStateException("Reflections not found on the class path");
+            available = false;
         }
-        reflections = new Reflections();
     }
 
     <T> Set<Class<? extends T>> subTypes(Class<T> cls) {
         return reflections.getSubTypesOf(cls);
+    }
+
+    public boolean isAvailable() {
+        return available;
     }
 }
