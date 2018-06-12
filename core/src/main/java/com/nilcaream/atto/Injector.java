@@ -4,6 +4,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Qualifier;
 import javax.inject.Singleton;
+import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -16,12 +17,22 @@ import java.util.stream.Collectors;
 
 class Injector {
 
+    private Scanner scanner = new Scanner();
+
     boolean isSingleton(Class<?> cls) {
         return cls.isAnnotationPresent(Singleton.class);
     }
 
     Descriptor describe(Class<?> cls) {
-        List<String> names = Arrays.stream(cls.getAnnotationsByType(Named.class))
+        return describe(cls, cls);
+    }
+
+    Descriptor describe(Field field) {
+        return describe(field.getType(), field);
+    }
+
+    private Descriptor describe(Class<?> cls, AnnotatedElement annotatedElement) {
+        List<String> names = Arrays.stream(annotatedElement.getAnnotationsByType(Named.class))
                 .map(Named.class::cast)
                 .map(named -> "Named:" + named.value())
                 .collect(Collectors.toList());
@@ -30,9 +41,9 @@ class Injector {
             throw new AttoException("Too many Named annotations for " + cls.getName());
         }
 
-        List<String> qualifiers = Arrays.stream(cls.getAnnotations())
-                .filter(annotation -> annotation.getClass().isAnnotationPresent(Qualifier.class))
-                .map(qualifier -> "Qualifier:" + qualifier.getClass().getName())
+        List<String> qualifiers = Arrays.stream(annotatedElement.getAnnotations())
+                .filter(annotation -> annotation.annotationType().isAnnotationPresent(Qualifier.class))
+                .map(qualifier -> "Qualifier:" + qualifier.annotationType().getName())
                 .collect(Collectors.toList());
 
         if (qualifiers.size() > 1) {
@@ -100,6 +111,28 @@ class Injector {
             return constructors.get(0);
         } else {
             throw new AttoException("Ambiguous public constructors for " + cls.getName());
+        }
+    }
+
+    Constructor<?> getConstructor(Descriptor descriptor) {
+        if (descriptor.getCls().isInterface()) {
+            if (scanner.isAvailable()) {
+                List<Descriptor> descriptors = scanner.subTypes(descriptor.getCls()).stream()
+                        .map(subType -> describe(subType))
+                        .filter(subTypeDescriptor -> subTypeDescriptor.getQualifier().equals(descriptor.getQualifier()))
+                        .collect(Collectors.toList());
+                if (descriptors.isEmpty()) {
+                    throw new AttoException("Cannot find matching sub type for " + descriptor.toString());
+                } else if (descriptors.size() == 1) {
+                    return getConstructor(descriptors.get(0).getCls());
+                } else {
+                    throw new AttoException("Too many matching sub types for " + descriptor.toString());
+                }
+            } else {
+                throw new AttoException("Cannot instantiate by interface with Reflections missing on classpath");
+            }
+        } else {
+            return getConstructor(descriptor.getCls());
         }
     }
 }

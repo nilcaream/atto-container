@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class AttoTest {
 
-    private Atto underTest = Atto.builder().build();
+    private Atto underTest = new Atto();
 
     @Test
     void shouldErrorOutOnAmbiguousConstructors() {
@@ -38,9 +38,6 @@ class AttoTest {
 
     @Test
     void shouldInjectMultipleImplementations() {
-        // given
-        underTest = Atto.builder().classPathScanning(true).build();
-
         // when
         MultipleImplementations instance1 = underTest.instance(MultipleImplementations.class);
         MultipleImplementations instance2 = underTest.instance(MultipleImplementations.class);
