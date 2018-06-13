@@ -6,6 +6,7 @@ import com.nilcaream.atto.example.GreenQualifier;
 import com.nilcaream.atto.example.MultipleImplementations;
 import com.nilcaream.atto.example.NamedExample;
 import com.nilcaream.atto.example.TooManyAnnotations;
+import com.nilcaream.atto.exception.AmbiguousElementsException;
 import com.nilcaream.atto.exception.AttoException;
 import org.junit.Test;
 
@@ -17,6 +18,30 @@ import static org.junit.Assert.assertNotNull;
 public class InjectorTest {
 
     private Injector underTest = new Injector("com.nilcaream.atto");
+
+    @Test(expected = AttoException.class)
+    public void shouldErrorOutOnTooManyAnnotations() {
+        // when
+        underTest.describe(TooManyAnnotations.class);
+    }
+
+    @Test(expected = AmbiguousElementsException.class)
+    public void shouldErrorOutTooManyMatchingConstructors() {
+        // given
+        Descriptor descriptor = new Descriptor(ExampleInterface.class, "Named:Clone");
+
+        // when
+        underTest.getConstructor(descriptor);
+    }
+
+    @Test(expected = AttoException.class)
+    public void shouldErrorOutNotFoundDescriptor() {
+        // given
+        Descriptor descriptor = new Descriptor(ExampleInterface.class, "Named:NotFoundAnywhere");
+
+        // when
+        underTest.getConstructor(descriptor);
+    }
 
     @Test
     public void shouldDescribeNamedField() throws NoSuchFieldException {
@@ -77,11 +102,5 @@ public class InjectorTest {
         assertNotNull(descriptor);
         assertEquals(ExampleImplementationGreen.class, descriptor.getCls());
         assertEquals("Qualifier:com.nilcaream.atto.example.GreenQualifier", descriptor.getQualifier());
-    }
-
-    @Test(expected = AttoException.class)
-    public void shouldErrorOutOnTooManyAnnotations() {
-        // when
-        underTest.describe(TooManyAnnotations.class);
     }
 }

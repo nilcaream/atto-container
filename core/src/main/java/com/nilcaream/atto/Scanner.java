@@ -17,7 +17,7 @@ class Scanner {
                 Class.forName("org.reflections.Reflections");
                 reflections = new Reflections(scanPackage);
                 available = true;
-            } catch (ClassNotFoundException e) {
+            } catch (ClassNotFoundException ignore) {
                 // ignore
             }
         }

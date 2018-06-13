@@ -9,6 +9,7 @@ import com.nilcaream.atto.example.MultipleImplementations;
 import com.nilcaream.atto.example.PrivateConstructor;
 import com.nilcaream.atto.example.SameFieldNameChild;
 import com.nilcaream.atto.example.SingletonImplementation;
+import com.nilcaream.atto.example.StaticFinalFieldExample;
 import com.nilcaream.atto.exception.AmbiguousElementsException;
 import com.nilcaream.atto.exception.AttoException;
 import com.nilcaream.atto.exception.ReflectionsNotFoundException;
@@ -49,6 +50,21 @@ public class AttoTest {
         underTest.instance(CyclicPrototype.class);
     }
 
+    @Test(expected = AttoException.class)
+    public void shouldErrorOutStaticFinalFieldInjection() {
+        // when
+        underTest.instance(StaticFinalFieldExample.class);
+    }
+
+    @Test(expected = AttoException.class)
+    public void shouldErrorOutOnTooShallowInjection() {
+        // given
+        underTest = Atto.builder().maxDepth(1).build();
+
+        // when
+        underTest.instance(SingletonImplementation.class);
+    }
+
     @Test
     public void shouldInjectMultipleImplementations() {
         // given
@@ -82,6 +98,7 @@ public class AttoTest {
         assertNotSame(instance1.getGreen2(), instance2.getGreen2());
         assertSame(instance1.getBlue1(), instance2.getBlue1());
         assertSame(instance1.getBlue1(), instance2.getBlue2());
+        assertSame(instance1.getBlue2(), instance2.getBlue1());
     }
 
     @Test
@@ -120,7 +137,7 @@ public class AttoTest {
     }
 
     @Test
-    public void shouldInjectFieldsOfAbstractClass() {
+    public void shouldInjectFieldsOfSuperClass() {
         // when
         SingletonImplementation instance = underTest.instance(SingletonImplementation.class);
 
