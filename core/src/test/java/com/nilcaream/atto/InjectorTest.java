@@ -1,21 +1,25 @@
 package com.nilcaream.atto;
 
+import com.nilcaream.atto.example.ExampleImplementationGreen;
 import com.nilcaream.atto.example.ExampleInterface;
 import com.nilcaream.atto.example.GreenQualifier;
 import com.nilcaream.atto.example.MultipleImplementations;
-import org.junit.jupiter.api.Test;
+import com.nilcaream.atto.example.NamedExample;
+import com.nilcaream.atto.example.TooManyAnnotations;
+import com.nilcaream.atto.exception.AttoException;
+import org.junit.Test;
 
 import java.lang.reflect.Field;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
-class InjectorTest {
+public class InjectorTest {
 
-    private Injector underTest = new Injector();
+    private Injector underTest = new Injector("com.nilcaream.atto");
 
     @Test
-    void shouldDescribeNamedField() throws NoSuchFieldException {
+    public void shouldDescribeNamedField() throws NoSuchFieldException {
         // given
         Field field = MultipleImplementations.class.getDeclaredField("blue1");
 
@@ -29,7 +33,7 @@ class InjectorTest {
     }
 
     @Test
-    void shouldDescribeQualifierField() throws NoSuchFieldException {
+    public void shouldDescribeQualifierField() throws NoSuchFieldException {
         // given
         Field field = MultipleImplementations.class.getDeclaredField("green1");
 
@@ -40,5 +44,44 @@ class InjectorTest {
         assertNotNull(descriptor);
         assertEquals(ExampleInterface.class, descriptor.getCls());
         assertEquals("Qualifier:" + GreenQualifier.class.getName(), descriptor.getQualifier());
+    }
+
+    @Test
+    public void shouldDescribeNotAnnotatedClass() {
+        // when
+        Descriptor descriptor = underTest.describe(MultipleImplementations.class);
+
+        // then
+        assertNotNull(descriptor);
+        assertEquals(MultipleImplementations.class, descriptor.getCls());
+        assertEquals("", descriptor.getQualifier());
+    }
+
+    @Test
+    public void shouldDescribeNamedClass() {
+        // when
+        Descriptor descriptor = underTest.describe(NamedExample.class);
+
+        // then
+        assertNotNull(descriptor);
+        assertEquals(NamedExample.class, descriptor.getCls());
+        assertEquals("Named:TestName", descriptor.getQualifier());
+    }
+
+    @Test
+    public void shouldDescribeQualifiedClass() {
+        // when
+        Descriptor descriptor = underTest.describe(ExampleImplementationGreen.class);
+
+        // then
+        assertNotNull(descriptor);
+        assertEquals(ExampleImplementationGreen.class, descriptor.getCls());
+        assertEquals("Qualifier:com.nilcaream.atto.example.GreenQualifier", descriptor.getQualifier());
+    }
+
+    @Test(expected = AttoException.class)
+    public void shouldErrorOutOnTooManyAnnotations() {
+        // when
+        underTest.describe(TooManyAnnotations.class);
     }
 }

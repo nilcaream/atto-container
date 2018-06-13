@@ -6,8 +6,8 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.UUID;
 
-@Singleton
 @Getter
+@Singleton
 public class RegularSingleton {
 
     private String uuid = UUID.randomUUID().toString();

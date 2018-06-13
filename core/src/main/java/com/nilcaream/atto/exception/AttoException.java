@@ -1,4 +1,4 @@
-package com.nilcaream.atto;
+package com.nilcaream.atto.exception;
 
 public class AttoException extends RuntimeException {
 

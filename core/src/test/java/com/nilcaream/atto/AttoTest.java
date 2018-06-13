@@ -2,42 +2,58 @@ package com.nilcaream.atto;
 
 import com.nilcaream.atto.example.AmbiguousConstructors;
 import com.nilcaream.atto.example.CyclicDependencies1;
+import com.nilcaream.atto.example.CyclicPrototype;
 import com.nilcaream.atto.example.ExampleImplementationBlue;
 import com.nilcaream.atto.example.ExampleImplementationGreen;
 import com.nilcaream.atto.example.MultipleImplementations;
 import com.nilcaream.atto.example.PrivateConstructor;
+import com.nilcaream.atto.example.SameFieldNameChild;
 import com.nilcaream.atto.example.SingletonImplementation;
-import org.junit.jupiter.api.Test;
+import com.nilcaream.atto.exception.AmbiguousElementsException;
+import com.nilcaream.atto.exception.AttoException;
+import com.nilcaream.atto.exception.ReflectionsNotFoundException;
+import org.junit.Test;
 
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 
-class AttoTest {
+public class AttoTest {
 
-    private Atto underTest = new Atto();
+    private Atto underTest = Atto.builder().build();
 
-    @Test
-    void shouldErrorOutOnAmbiguousConstructors() {
-        assertThrows(AttoException.class, () -> underTest.instance(AmbiguousConstructors.class));
+    @Test(expected = AmbiguousElementsException.class)
+    public void shouldErrorOutOnAmbiguousConstructors() {
+        // when
+        underTest.instance(AmbiguousConstructors.class);
+    }
+
+    @Test(expected = AttoException.class)
+    public void shouldErrorOutOnPrivateConstructor() {
+        // when
+        underTest.instance(PrivateConstructor.class);
+    }
+
+    @Test(expected = ReflectionsNotFoundException.class)
+    public void shouldErrorOutForInterfacesWithoutScanner() {
+        // when
+        underTest.instance(MultipleImplementations.class);
+    }
+
+    @Test(expected = AttoException.class)
+    public void shouldErrorOutCyclicPrototype() {
+        // when
+        underTest.instance(CyclicPrototype.class);
     }
 
     @Test
-    void shouldErrorOutOnPrivateConstructor() {
-        assertThrows(AttoException.class, () -> underTest.instance(PrivateConstructor.class));
-    }
+    public void shouldInjectMultipleImplementations() {
+        // given
+        underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").build();
 
-    @Test
-    void shouldErrorOutForInterfacesWithoutScanner() {
-        assertThrows(AttoException.class, () -> underTest.instance(MultipleImplementations.class));
-    }
-
-    @Test
-    void shouldInjectMultipleImplementations() {
         // when
         MultipleImplementations instance1 = underTest.instance(MultipleImplementations.class);
         MultipleImplementations instance2 = underTest.instance(MultipleImplementations.class);
@@ -69,7 +85,7 @@ class AttoTest {
     }
 
     @Test
-    void shouldSupportCyclicDependenciesFieldInjection1() {
+    public void shouldSupportCyclicDependenciesFieldInjection1() {
         // when
         CyclicDependencies1 instance = underTest.instance(CyclicDependencies1.class);
 
@@ -86,13 +102,13 @@ class AttoTest {
         assertNotNull(instance.getCyclicDependencies1().getCyclicDependencies2());
         assertNotNull(instance.getCyclicDependencies1().getCyclicDependencies3());
 
-        assertNotSame(instance, instance.getCyclicDependencies1());
-        assertNotSame(instance.getCyclicDependencies1(), instance.getCyclicDependencies1().getCyclicDependencies1());
+        assertSame(instance, instance.getCyclicDependencies1());
+        assertSame(instance.getCyclicDependencies1(), instance.getCyclicDependencies1().getCyclicDependencies1());
 
         // instance - 2
         assertNotNull(instance.getCyclicDependencies2().getCyclicDependencies1());
         assertNotNull(instance.getCyclicDependencies2().getCyclicDependencies3());
-        assertNotSame(instance, instance.getCyclicDependencies2().getCyclicDependencies1());
+        assertSame(instance, instance.getCyclicDependencies2().getCyclicDependencies1());
 
         // instance - 3
         assertNotNull(instance.getCyclicDependencies3().getCyclicDependencies1());
@@ -104,7 +120,7 @@ class AttoTest {
     }
 
     @Test
-    void shouldInjectFieldsOfAbstractClass() {
+    public void shouldInjectFieldsOfAbstractClass() {
         // when
         SingletonImplementation instance = underTest.instance(SingletonImplementation.class);
 
@@ -116,4 +132,16 @@ class AttoTest {
 
         assertNotSame(instance.getRegularPrototype(), instance.getRegularPrototypeSub());
     }
+
+    @Test
+    public void shouldInjectFieldsWithSameName() {
+        // when
+        SameFieldNameChild instance = underTest.instance(SameFieldNameChild.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getTheNameFromChild());
+        assertNotNull(instance.getTheNameFromParent());
+    }
+
 }

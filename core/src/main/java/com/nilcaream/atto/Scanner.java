@@ -1,5 +1,6 @@
 package com.nilcaream.atto;
 
+import com.nilcaream.atto.exception.ReflectionsNotFoundException;
 import org.reflections.Reflections;
 
 import java.util.Set;
@@ -8,22 +9,29 @@ class Scanner {
 
     private Reflections reflections;
 
-    private boolean available = true;
+    private boolean available;
 
-    {
-        try {
-            Class.forName("org.reflections.Reflections");
-            reflections = new Reflections();
-        } catch (ClassNotFoundException e) {
-            available = false;
+    Scanner(String scanPackage) {
+        if (scanPackage != null) {
+            try {
+                Class.forName("org.reflections.Reflections");
+                reflections = new Reflections(scanPackage);
+                available = true;
+            } catch (ClassNotFoundException e) {
+                // ignore
+            }
         }
     }
 
     <T> Set<Class<? extends T>> subTypes(Class<T> cls) {
-        return reflections.getSubTypesOf(cls);
+        if (available) {
+            return reflections.getSubTypesOf(cls);
+        } else {
+            throw new ReflectionsNotFoundException("Reflections required on classpath for getting sub types of " + cls.getName());
+        }
     }
 
-    public boolean isAvailable() {
+    boolean isAvailable() {
         return available;
     }
 }

@@ -3,8 +3,10 @@ package com.nilcaream.atto.example;
 import lombok.Getter;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 @Getter
+@Singleton
 public class CyclicDependencies1 {
 
     @Inject
@@ -15,4 +17,5 @@ public class CyclicDependencies1 {
 
     @Inject
     private CyclicDependencies3 cyclicDependencies3;
+
 }

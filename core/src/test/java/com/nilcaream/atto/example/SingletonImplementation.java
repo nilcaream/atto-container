@@ -5,8 +5,8 @@ import lombok.Getter;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-@Singleton
 @Getter
+@Singleton
 public class SingletonImplementation extends AbstractClass {
 
     @Inject
