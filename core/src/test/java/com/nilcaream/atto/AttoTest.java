@@ -16,9 +16,10 @@ import com.nilcaream.atto.example.UnambiguousAbstractHolder;
 import com.nilcaream.atto.example.UnambiguousHolder;
 import com.nilcaream.atto.example.UnambiguousPurple;
 import com.nilcaream.atto.example.UnambiguousRed;
-import com.nilcaream.atto.exception.AmbiguousElementsException;
+import com.nilcaream.atto.exception.AmbiguousTargetException;
 import com.nilcaream.atto.exception.AttoException;
 import com.nilcaream.atto.exception.ReflectionsNotFoundException;
+import com.nilcaream.atto.exception.TargetNotFoundException;
 import org.junit.Test;
 
 import java.util.stream.Stream;
@@ -32,13 +33,13 @@ public class AttoTest {
 
     private Atto underTest = Atto.builder().build();
 
-    @Test(expected = AmbiguousElementsException.class)
+    @Test(expected = AmbiguousTargetException.class)
     public void shouldErrorOutOnAmbiguousConstructors() {
         // when
         underTest.instance(AmbiguousConstructors.class);
     }
 
-    @Test(expected = AttoException.class)
+    @Test(expected = TargetNotFoundException.class)
     public void shouldErrorOutOnPrivateConstructor() {
         // when
         underTest.instance(PrivateConstructor.class);
@@ -220,6 +221,9 @@ public class AttoTest {
 
     @Test
     public void shouldInjectUnambiguousWithoutQualifiersByInterface() {
+        // given
+        underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").build();
+
         // when
         UnambiguousAbstractHolder instance = underTest.instance(UnambiguousAbstractHolder.class);
 

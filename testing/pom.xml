@@ -15,17 +15,13 @@
     <version>0.1-SNAPSHOT</version>
 
     <name>Atto Container - Testing</name>
+    <description>No external dependencies tests</description>
 
     <dependencies>
         <dependency>
             <groupId>com.nilcaream.atto</groupId>
             <artifactId>atto-core</artifactId>
             <version>0.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 

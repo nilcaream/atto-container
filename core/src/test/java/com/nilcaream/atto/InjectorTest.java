@@ -6,8 +6,8 @@ import com.nilcaream.atto.example.GreenQualifier;
 import com.nilcaream.atto.example.MultipleImplementations;
 import com.nilcaream.atto.example.NamedExample;
 import com.nilcaream.atto.example.TooManyAnnotations;
-import com.nilcaream.atto.exception.AmbiguousElementsException;
-import com.nilcaream.atto.exception.AttoException;
+import com.nilcaream.atto.exception.AmbiguousTargetException;
+import com.nilcaream.atto.exception.TargetNotFoundException;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -19,13 +19,13 @@ public class InjectorTest {
 
     private Injector underTest = new Injector("com.nilcaream.atto");
 
-    @Test(expected = AttoException.class)
+    @Test(expected = AmbiguousTargetException.class)
     public void shouldErrorOutOnTooManyAnnotations() {
         // when
         underTest.describe(TooManyAnnotations.class);
     }
 
-    @Test(expected = AmbiguousElementsException.class)
+    @Test(expected = AmbiguousTargetException.class)
     public void shouldErrorOutTooManyMatchingConstructors() {
         // given
         Descriptor descriptor = new Descriptor(ExampleInterface.class, "Named:Clone");
@@ -34,7 +34,7 @@ public class InjectorTest {
         underTest.getConstructor(descriptor);
     }
 
-    @Test(expected = AttoException.class)
+    @Test(expected = TargetNotFoundException.class)
     public void shouldErrorOutNotFoundDescriptor() {
         // given
         Descriptor descriptor = new Descriptor(ExampleInterface.class, "Named:NotFoundAnywhere");

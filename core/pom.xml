@@ -15,6 +15,7 @@
     <version>0.1-SNAPSHOT</version>
 
     <name>Atto Container - Core</name>
+    <description>Core implementation with optional (fail-safe) dependencies</description>
 
     <dependencies>
         <dependency>
