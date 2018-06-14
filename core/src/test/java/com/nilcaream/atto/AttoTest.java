@@ -1,6 +1,7 @@
 package com.nilcaream.atto;
 
 import com.nilcaream.atto.example.AmbiguousConstructors;
+import com.nilcaream.atto.example.ConstructorInjection;
 import com.nilcaream.atto.example.CyclicDependencies1;
 import com.nilcaream.atto.example.CyclicPrototype;
 import com.nilcaream.atto.example.ExampleImplementationBlue;
@@ -159,6 +160,26 @@ public class AttoTest {
         assertNotNull(instance);
         assertNotNull(instance.getTheNameFromChild());
         assertNotNull(instance.getTheNameFromParent());
+    }
+
+    @Test
+    public void shouldInjectByConstructorWithoutProxy() {
+        // given
+        underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").build();
+
+        // when
+        ConstructorInjection instance = underTest.instance(ConstructorInjection.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getBlue());
+        assertNotNull(instance.getGreen());
+        assertNotNull(instance.getRegularPrototype());
+        assertNotNull(instance.getRegularPrototypeField());
+
+        assertEquals(ExampleImplementationBlue.class, instance.getBlue().getClass());
+        assertEquals(ExampleImplementationGreen.class, instance.getGreen().getClass());
+        assertNotSame(instance.getRegularPrototypeField(), instance.getRegularPrototype());
     }
 
 }

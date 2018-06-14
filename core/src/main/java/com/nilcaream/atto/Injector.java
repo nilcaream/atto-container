@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 class Injector {
 
@@ -34,32 +35,24 @@ class Injector {
     }
 
     Descriptor describe(Class<?> cls) {
-        return describe(cls, cls);
+        return describe(cls, getNamedAnnotations(cls), getQualifierAnnotations(cls));
     }
 
     Descriptor describe(Field field) {
-        return describe(field.getType(), field);
+        return describe(field.getType(), getNamedAnnotations(field), getQualifierAnnotations(field));
     }
 
-    private Descriptor describe(Class<?> cls, AnnotatedElement annotatedElement) {
-        List<String> names = Arrays.stream(annotatedElement.getAnnotationsByType(Named.class))
-                .map(Named.class::cast)
-                .map(named -> "Named:" + named.value())
-                .collect(Collectors.toList());
+    Descriptor describe(Class<?> cls, Annotation[] annotations) {
+        return describe(cls, getNamedAnnotations(annotations), getQualifierAnnotations(annotations));
+    }
 
-        if (names.size() > 1) {
-            throw new AmbiguousElementsException("Too many Named annotations for " + cls.getName());
+    private Descriptor describe(Class<?> cls, List<String> names, List<String> qualifiers) {
+        if (names.size() > 1) { // TODO this should be possible
+            throw new AmbiguousElementsException("Too many Named annotations for " + cls.getName() + " - " + names);
         }
 
-        List<String> qualifiers = Arrays.stream(annotatedElement.getAnnotations())
-                .map(Annotation::annotationType)
-                .filter(type -> !Named.class.equals(type))
-                .filter(type -> type.isAnnotationPresent(Qualifier.class))
-                .map(type -> "Qualifier:" + type.getName())
-                .collect(Collectors.toList());
-
         if (qualifiers.size() > 1) {
-            throw new AmbiguousElementsException("Too many Qualifier annotations for " + cls.getName());
+            throw new AmbiguousElementsException("Too many Qualifier annotations for " + cls.getName() + " - " + qualifiers);
         }
 
         Descriptor result;
@@ -72,9 +65,38 @@ class Injector {
         } else if (qualifiers.isEmpty()) {
             result = new Descriptor(cls, names.get(0));
         } else {
-            throw new AmbiguousElementsException("Both Named and Qualifier annotations are present on " + cls.getName());
+            throw new AmbiguousElementsException("Both Named and Qualifier annotations are present on " + cls.getName() + " - " + names + " " + qualifiers);
         }
         return result;
+    }
+
+    private List<String> getQualifierAnnotations(AnnotatedElement annotatedElement) {
+        return getQualifierAnnotations(annotatedElement.getAnnotations());
+    }
+
+    private List<String> getQualifierAnnotations(Annotation[] annotations) {
+        return Arrays.stream(annotations)
+                .map(Annotation::annotationType)
+                .filter(type -> !Named.class.equals(type))
+                .filter(type -> type.isAnnotationPresent(Qualifier.class))
+                .map(type -> "Qualifier:" + type.getName())
+                .collect(Collectors.toList());
+    }
+
+    private List<String> getNamedAnnotations(AnnotatedElement annotatedElement) {
+        return getNamedAnnotations(Arrays.stream(annotatedElement.getAnnotationsByType(Named.class)));
+    }
+
+    private List<String> getNamedAnnotations(Annotation[] annotations) {
+        return getNamedAnnotations(Arrays.stream(annotations)
+                .filter(annotation -> Named.class.equals(annotation.annotationType())));
+    }
+
+    private List<String> getNamedAnnotations(Stream<Annotation> annotations) {
+        return annotations
+                .map(Named.class::cast)
+                .map(named -> "Named:" + named.value())
+                .collect(Collectors.toList());
     }
 
     List<Field> getNullFields(Object instance) throws IllegalAccessException {

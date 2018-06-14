@@ -2,6 +2,7 @@ package com.nilcaream.atto;
 
 import com.nilcaream.atto.exception.AttoException;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -19,7 +20,7 @@ public class Atto {
     public <T> T instance(Class<T> cls) {
         try {
             return cls.cast(instance(injector.describe(cls), new AtomicInteger(0)));
-        } catch (IllegalAccessException | InvocationTargetException | InstantiationException e) {
+        } catch (IllegalAccessException | InvocationTargetException | InstantiationException | IllegalArgumentException e) {
             throw new AttoException("Cannot create instance of " + cls.getName(), e);
         }
     }
@@ -36,15 +37,30 @@ public class Atto {
         if (injector.isSingleton(targetDescriptor.getCls())) {
             instance = singletons.get(targetDescriptor);
             if (instance == null) {
-                instance = constructor.newInstance();
+                instance = instance(constructor, depth);
                 singletons.put(targetDescriptor, instance);
                 processFields(instance, depth);
             }
         } else {
-            instance = constructor.newInstance();
+            instance = instance(constructor, depth);
             processFields(instance, depth);
         }
         return instance;
+    }
+
+    private Object instance(Constructor constructor, AtomicInteger depth) throws IllegalAccessException, InvocationTargetException, InstantiationException {
+        if (constructor.getParameterCount() == 0) {
+            return constructor.newInstance();
+        } else {
+            Object[] parameters = new Object[constructor.getParameterCount()];
+            Class[] parameterTypes = constructor.getParameterTypes();
+            for (int i = 0, length = parameterTypes.length; i < length; i++) {
+                Class cls = parameterTypes[i];
+                Annotation[] annotations = constructor.getParameterAnnotations()[i];
+                parameters[i] = instance(injector.describe(cls, annotations), depth);
+            }
+            return constructor.newInstance(parameters);
+        }
     }
 
     private void processFields(Object instance, AtomicInteger depth) throws IllegalAccessException, InvocationTargetException, InstantiationException {
