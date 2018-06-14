@@ -2,6 +2,7 @@ package com.nilcaream.atto;
 
 import com.nilcaream.atto.example.AmbiguousConstructors;
 import com.nilcaream.atto.example.ConstructorInjection;
+import com.nilcaream.atto.example.ConstructorInjectionSimple;
 import com.nilcaream.atto.example.CyclicDependencies1;
 import com.nilcaream.atto.example.CyclicPrototype;
 import com.nilcaream.atto.example.ExampleImplementationBlue;
@@ -11,6 +12,10 @@ import com.nilcaream.atto.example.PrivateConstructor;
 import com.nilcaream.atto.example.SameFieldNameChild;
 import com.nilcaream.atto.example.SingletonImplementation;
 import com.nilcaream.atto.example.StaticFinalFieldExample;
+import com.nilcaream.atto.example.UnambiguousAbstractHolder;
+import com.nilcaream.atto.example.UnambiguousHolder;
+import com.nilcaream.atto.example.UnambiguousPurple;
+import com.nilcaream.atto.example.UnambiguousRed;
 import com.nilcaream.atto.exception.AmbiguousElementsException;
 import com.nilcaream.atto.exception.AttoException;
 import com.nilcaream.atto.exception.ReflectionsNotFoundException;
@@ -163,7 +168,7 @@ public class AttoTest {
     }
 
     @Test
-    public void shouldInjectByConstructorWithoutProxy() {
+    public void shouldInjectByConstructorWithScanning() {
         // given
         underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").build();
 
@@ -180,6 +185,51 @@ public class AttoTest {
         assertEquals(ExampleImplementationBlue.class, instance.getBlue().getClass());
         assertEquals(ExampleImplementationGreen.class, instance.getGreen().getClass());
         assertNotSame(instance.getRegularPrototypeField(), instance.getRegularPrototype());
+    }
+
+    @Test
+    public void shouldInjectByConstructorWithoutScanning() {
+        // when
+        ConstructorInjectionSimple instance = underTest.instance(ConstructorInjectionSimple.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getBlue());
+        assertNotNull(instance.getGreen());
+        assertNotNull(instance.getRegularPrototype());
+        assertNotNull(instance.getRegularPrototypeField());
+
+        assertEquals(ExampleImplementationBlue.class, instance.getBlue().getClass());
+        assertEquals(ExampleImplementationGreen.class, instance.getGreen().getClass());
+        assertNotSame(instance.getRegularPrototypeField(), instance.getRegularPrototype());
+    }
+
+    @Test
+    public void shouldInjectUnambiguousWithoutQualifiers() {
+        // when
+        UnambiguousHolder instance = underTest.instance(UnambiguousHolder.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getUnambiguousRed());
+        assertNotNull(instance.getUnambiguousPurple());
+
+        assertEquals(UnambiguousRed.class, instance.getUnambiguousRed().getClass());
+        assertEquals(UnambiguousPurple.class, instance.getUnambiguousPurple().getClass());
+    }
+
+    @Test
+    public void shouldInjectUnambiguousWithoutQualifiersByInterface() {
+        // when
+        UnambiguousAbstractHolder instance = underTest.instance(UnambiguousAbstractHolder.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getUnambiguousRed());
+        assertNotNull(instance.getUnambiguousPurple());
+
+        assertEquals(UnambiguousRed.class, instance.getUnambiguousRed().getClass());
+        assertEquals(UnambiguousPurple.class, instance.getUnambiguousPurple().getClass());
     }
 
 }
