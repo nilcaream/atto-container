@@ -12,12 +12,14 @@ import org.junit.Test;
 
 import java.lang.reflect.Field;
 
+import static com.nilcaream.atto.Logger.Level.ALL;
+import static com.nilcaream.atto.Logger.standardOutputLogger;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class InjectorTest {
 
-    private Injector underTest = new Injector("com.nilcaream.atto");
+    private Injector underTest = Injector.builder().logger(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto").build();
 
     @Test(expected = AmbiguousTargetException.class)
     public void shouldErrorOutOnTooManyAnnotations() {

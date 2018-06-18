@@ -12,16 +12,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Atto {
 
+    private LoggerWrapper logger = new LoggerWrapper();
     private int maxDepth = 32;
-    private Injector injector;
     private Map<Descriptor, Object> singletons = new ConcurrentHashMap<>();
 
+    private Injector injector;
 
     public <T> T instance(Class<T> cls) {
         try {
             return cls.cast(instance(injector.describe(cls), new AtomicInteger(0)));
         } catch (IllegalAccessException | InvocationTargetException | InstantiationException | IllegalArgumentException e) {
+            logger.error(e.toString());
             throw new AttoException("Cannot create instance of " + cls.getName(), e);
+        } catch (AttoException e) {
+            logger.error(e.toString());
+            throw e;
         }
     }
 
@@ -38,11 +43,15 @@ public class Atto {
             instance = singletons.get(targetDescriptor);
             if (instance == null) {
                 instance = instance(constructor, depth);
+                logger.info("Created singleton " + targetDescriptor);
                 singletons.put(targetDescriptor, instance);
                 processFields(instance, depth);
+            } else {
+                logger.info("Returned singleton " + targetDescriptor);
             }
         } else {
             instance = instance(constructor, depth);
+            logger.info("Created prototype " + targetDescriptor);
             processFields(instance, depth);
         }
         return instance;
@@ -70,10 +79,58 @@ public class Atto {
     }
 
     @lombok.Builder(builderClassName = "Builder")
-    private Atto(String scanPackage, int maxDepth) {
-        injector = new Injector(scanPackage);
+    private Atto(String scanPackage, int maxDepth, Logger loggerInstance, Class<? extends Logger> loggerClass) {
+        if (loggerInstance != null) {
+            logger.setImplementation(loggerInstance);
+        }
+
+        injector = Injector.builder().scanPackage(scanPackage).logger(this.logger).build();
+
         if (maxDepth > 0) {
             this.maxDepth = maxDepth;
+        }
+
+        if (loggerClass != null) {
+            logger.setImplementation(instance(loggerClass));
+        }
+    }
+
+    private static final class LoggerWrapper implements Logger {
+
+        private Logger implementation = Logger.nullLogger();
+
+        void setImplementation(Logger implementation) {
+            this.implementation = implementation;
+        }
+
+        @Override
+        public void debug(String message, Object... args) {
+            implementation.debug(message, args);
+        }
+
+        @Override
+        public void info(String message, Object... args) {
+            implementation.info(message, args);
+        }
+
+        @Override
+        public void warning(String message, Object... args) {
+            implementation.warning(message, args);
+        }
+
+        @Override
+        public void error(String message, Object... args) {
+            implementation.error(message, args);
+        }
+
+        @Override
+        public void accept(Level level, String message, Object... args) {
+            implementation.accept(level, message, args);
+        }
+
+        @Override
+        public void accept(Level level, String s) {
+            implementation.accept(level, s);
         }
     }
 }

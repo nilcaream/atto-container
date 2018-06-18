@@ -1,17 +1,23 @@
 package com.nilcaream.atto;
 
 import com.nilcaream.atto.example.AmbiguousConstructors;
+import com.nilcaream.atto.example.ClassWithLogger;
 import com.nilcaream.atto.example.ConstructorInjection;
 import com.nilcaream.atto.example.ConstructorInjectionSimple;
 import com.nilcaream.atto.example.CyclicDependencies1;
 import com.nilcaream.atto.example.CyclicPrototype;
 import com.nilcaream.atto.example.ExampleImplementationBlue;
 import com.nilcaream.atto.example.ExampleImplementationGreen;
+import com.nilcaream.atto.example.InnerClassImplementationHolder;
+import com.nilcaream.atto.example.InnerClassInjectionExample;
+import com.nilcaream.atto.example.LoggerImplementation;
 import com.nilcaream.atto.example.MultipleImplementations;
 import com.nilcaream.atto.example.PrivateConstructor;
 import com.nilcaream.atto.example.SameFieldNameChild;
 import com.nilcaream.atto.example.SingletonImplementation;
 import com.nilcaream.atto.example.StaticFinalFieldExample;
+import com.nilcaream.atto.example.StaticNestedClassImplementationHolder;
+import com.nilcaream.atto.example.StaticNestedClassInjectionExample;
 import com.nilcaream.atto.example.UnambiguousAbstractHolder;
 import com.nilcaream.atto.example.UnambiguousHolder;
 import com.nilcaream.atto.example.UnambiguousPurple;
@@ -24,14 +30,17 @@ import org.junit.Test;
 
 import java.util.stream.Stream;
 
+import static com.nilcaream.atto.Logger.Level.ALL;
+import static com.nilcaream.atto.Logger.standardOutputLogger;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 public class AttoTest {
 
-    private Atto underTest = Atto.builder().build();
+    private Atto underTest = Atto.builder().loggerInstance(standardOutputLogger(ALL)).build();
 
     @Test(expected = AmbiguousTargetException.class)
     public void shouldErrorOutOnAmbiguousConstructors() {
@@ -66,7 +75,7 @@ public class AttoTest {
     @Test(expected = AttoException.class)
     public void shouldErrorOutOnTooShallowInjection() {
         // given
-        underTest = Atto.builder().maxDepth(1).build();
+        underTest = Atto.builder().loggerInstance(standardOutputLogger(ALL)).maxDepth(1).build();
 
         // when
         underTest.instance(SingletonImplementation.class);
@@ -75,7 +84,7 @@ public class AttoTest {
     @Test
     public void shouldInjectMultipleImplementations() {
         // given
-        underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").build();
+        underTest = Atto.builder().loggerInstance(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto.example").build();
 
         // when
         MultipleImplementations instance1 = underTest.instance(MultipleImplementations.class);
@@ -171,7 +180,7 @@ public class AttoTest {
     @Test
     public void shouldInjectByConstructorWithScanning() {
         // given
-        underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").build();
+        underTest = Atto.builder().loggerInstance(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto.example").build();
 
         // when
         ConstructorInjection instance = underTest.instance(ConstructorInjection.class);
@@ -222,7 +231,7 @@ public class AttoTest {
     @Test
     public void shouldInjectUnambiguousWithoutQualifiersByInterface() {
         // given
-        underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").build();
+        underTest = Atto.builder().loggerInstance(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto.example").build();
 
         // when
         UnambiguousAbstractHolder instance = underTest.instance(UnambiguousAbstractHolder.class);
@@ -236,4 +245,47 @@ public class AttoTest {
         assertEquals(UnambiguousPurple.class, instance.getUnambiguousPurple().getClass());
     }
 
+    @Test
+    public void shouldCreateInstanceWithCustomLogger() {
+        // given
+        int count = LoggerImplementation.getCount();
+        underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerClass(LoggerImplementation.class).build();
+
+        // when
+        ClassWithLogger instance = underTest.instance(ClassWithLogger.class);
+
+        // then
+        assertEquals(LoggerImplementation.class, instance.getLogger().getClass());
+        assertEquals(count + 1, LoggerImplementation.getCount());
+        assertTrue(LoggerImplementation.getLogs().contains(LoggerImplementation.class.getName()));
+    }
+
+    @Test
+    public void shouldInjectStaticNestedClassInstance() {
+        // given
+        underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerInstance(standardOutputLogger(ALL)).build();
+
+        // when
+        StaticNestedClassInjectionExample instance = underTest.instance(StaticNestedClassInjectionExample.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getImplementation());
+        assertEquals(StaticNestedClassImplementationHolder.StaticNestedClassImplementation.class, instance.getImplementation().getClass());
+    }
+
+    @Test
+    public void shouldInjectInnerClassInstanceAndOuterClassField() {
+        // given
+        underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerInstance(standardOutputLogger(ALL)).build();
+
+        // when
+        InnerClassInjectionExample instance = underTest.instance(InnerClassInjectionExample.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getImplementation());
+        assertEquals(InnerClassImplementationHolder.InnerClassImplementation.class, instance.getImplementation().getClass());
+        assertNotNull(InnerClassImplementationHolder.InnerClassImplementation.class.cast(instance.getImplementation()).getFieldFromOuterClass());
+    }
 }

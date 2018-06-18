@@ -23,8 +23,14 @@ class Injector {
 
     private Scanner scanner;
 
-    Injector(String scanPackage) {
-        scanner = new Scanner(scanPackage);
+    private Logger logger = Logger.nullLogger();
+
+    @lombok.Builder(builderClassName = "Builder")
+    private Injector(String scanPackage, Logger logger) {
+        if (logger != null) {
+            this.logger = logger;
+        }
+        scanner = Scanner.builder().scanPackage(scanPackage).build();
         if (scanPackage != null && !scanner.isAvailable()) {
             throw new ReflectionsNotFoundException("Reflections required on classpath for scanning package " + scanPackage);
         }
@@ -35,23 +41,25 @@ class Injector {
     }
 
     Descriptor describe(Class<?> cls) {
-        return describe(cls, getNamedAnnotations(cls), getQualifierAnnotations(cls));
+        return describe(cls, cls, getNamedAnnotations(cls), getQualifierAnnotations(cls));
     }
 
     Descriptor describe(Field field) {
-        return describe(field.getType(), getNamedAnnotations(field), getQualifierAnnotations(field));
+        return describe(field, field.getType(), getNamedAnnotations(field), getQualifierAnnotations(field));
     }
 
     Descriptor describe(Class<?> cls, Annotation[] annotations) {
-        return describe(cls, getNamedAnnotations(annotations), getQualifierAnnotations(annotations));
+        return describe(cls, cls, getNamedAnnotations(annotations), getQualifierAnnotations(annotations));
     }
 
-    private Descriptor describe(Class<?> cls, List<String> names, List<String> qualifiers) {
+    private Descriptor describe(Object source, Class<?> cls, List<String> names, List<String> qualifiers) {
         if (names.size() > 1) { // TODO this should be possible
+            logger.error("Names for %s: %s", cls.getName(), names);
             throw new AmbiguousTargetException("Too many Named annotations for " + cls.getName() + " - " + names);
         }
 
         if (qualifiers.size() > 1) {
+            logger.error("Qualifiers for %s: %s", cls.getName(), qualifiers);
             throw new AmbiguousTargetException("Too many Qualifier annotations for " + cls.getName() + " - " + qualifiers);
         }
 
@@ -65,8 +73,11 @@ class Injector {
         } else if (qualifiers.isEmpty()) {
             result = new Descriptor(cls, names.get(0));
         } else {
+            logger.error("Names and qualifiers for %s: %s %s", cls.getName(), names, qualifiers);
             throw new AmbiguousTargetException("Both Named and Qualifier annotations are present on " + cls.getName() + " - " + names + " " + qualifiers);
         }
+
+        logger.debug("%s for %s of type %s. %s %s", result, source, cls.getName(), names, qualifiers);
         return result;
     }
 
@@ -108,6 +119,7 @@ class Injector {
                     field.setAccessible(true);
                     if (field.get(instance) == null) {
                         results.add(field);
+                        logger.debug("Field %s is null", field);
                     }
                 }
             }
@@ -126,6 +138,7 @@ class Injector {
         } else if (constructors.size() == 1) {
             return constructors.get(0);
         } else {
+            logger.error("Constructors %s for %s", constructors, cls.getName());
             throw new AmbiguousTargetException("Too many public constructors for " + cls.getName());
         }
     }
@@ -141,15 +154,21 @@ class Injector {
                 if (descriptors.isEmpty()) {
                     throw new TargetNotFoundException("Cannot find matching sub type for " + descriptor.toString());
                 } else if (descriptors.size() == 1) {
-                    return getConstructor(descriptors.get(0).getCls());
+                    Descriptor targetDescriptor = descriptors.get(0);
+                    Constructor<?> constructor = getConstructor(targetDescriptor.getCls());
+                    logger.debug("Constructor %s for %s (source %s)", constructor, targetDescriptor, descriptor);
+                    return constructor;
                 } else {
+                    logger.error("Matching types for %s: %s", descriptor, descriptors);
                     throw new AmbiguousTargetException("Too many matching sub types for " + descriptor.toString());
                 }
             } else {
-                throw new ReflectionsNotFoundException("Reflections required on classpath for creating instances by interface or for abstract classes for " + descriptor.getCls().getName());
+                throw new ReflectionsNotFoundException("Reflections required on classpath for creating instances by interface or for abstract classes of " + descriptor.getCls().getName() + " type");
             }
         } else {
-            return getConstructor(descriptor.getCls());
+            Constructor<?> constructor = getConstructor(descriptor.getCls());
+            logger.debug("Constructor %s for %s", constructor, descriptor);
+            return constructor;
         }
     }
 

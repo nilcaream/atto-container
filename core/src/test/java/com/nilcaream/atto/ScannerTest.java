@@ -10,6 +10,8 @@ import org.junit.Test;
 
 import java.util.Set;
 
+import static com.nilcaream.atto.Logger.Level.ALL;
+import static com.nilcaream.atto.Logger.standardOutputLogger;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -17,12 +19,12 @@ import static org.junit.Assert.assertTrue;
 
 public class ScannerTest {
 
-    private Scanner underTest = new Scanner("com.nilcaream.atto");
+    private Scanner underTest = Scanner.builder().logger(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto").build();
 
     @Test(expected = ReflectionsNotFoundException.class)
     public void shouldErrorOutOnMissingPackageOnInitialization() {
         // given
-        underTest = new Scanner(null);
+        underTest = Scanner.builder().logger(standardOutputLogger(ALL)).build();
 
         // when
         assertFalse(underTest.isAvailable());
