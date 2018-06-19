@@ -36,7 +36,7 @@
 
     <scm>
         <connection>scm:git:git://github.com/nilcaream/atto-container.git</connection>
-        <developerConnection>scm:git:ssh://github.com:nilcaream/atto-container.git</developerConnection>
+        <developerConnection>scm:git:ssh://github.com/nilcaream/atto-container.git</developerConnection>
         <url>https://github.com/nilcaream/atto-container/tree/master</url>
     </scm>
 
@@ -198,6 +198,8 @@
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <useReleaseProfile>false</useReleaseProfile>
                     <releaseProfiles>release</releaseProfiles>
+                    <preparationGoals>clean verify</preparationGoals>
+                    <tagNameFormat>v@{project.version}</tagNameFormat>
                     <goals>deploy</goals>
                 </configuration>
             </plugin>
