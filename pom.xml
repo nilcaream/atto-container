@@ -20,7 +20,7 @@
 
     <groupId>com.nilcaream.atto</groupId>
     <artifactId>atto-parent</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1</version>
     <packaging>pom</packaging>
 
     <name>Atto Container</name>
@@ -38,7 +38,8 @@
         <connection>scm:git:ssh://git@github.com/nilcaream/atto-container.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/nilcaream/atto-container.git</developerConnection>
         <url>https://github.com/nilcaream/atto-container</url>
-    </scm>
+      <tag>v0.1</tag>
+  </scm>
 
     <developers>
         <developer>
@@ -81,7 +82,7 @@
             <dependency>
                 <groupId>com.nilcaream.atto</groupId>
                 <artifactId>atto-core</artifactId>
-                <version>0.1-SNAPSHOT</version>
+                <version>0.1</version>
             </dependency>
             <dependency>
                 <groupId>javax.inject</groupId>
