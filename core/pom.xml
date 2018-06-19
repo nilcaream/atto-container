@@ -7,15 +7,29 @@
     <parent>
         <groupId>com.nilcaream.atto</groupId>
         <artifactId>atto-parent</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>atto-core</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
 
     <name>Atto Container - Core</name>
     <description>Core implementation with optional (fail-safe) dependencies</description>
+    <url>https://github.com/nilcaream/atto-container</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git://github.com/nilcaream/atto-container.git</connection>
+        <developerConnection>scm:git:ssh://github.com:nilcaream/atto-container.git</developerConnection>
+        <url>https://github.com/nilcaream/atto-container/tree/master</url>
+    </scm>
 
     <dependencies>
         <dependency>
@@ -34,4 +48,19 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
