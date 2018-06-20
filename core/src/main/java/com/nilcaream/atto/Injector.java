@@ -106,7 +106,7 @@ class Injector {
             } else if (scanner.isAvailable()) {
                 return getConstructorByScanning(descriptor);
             } else {
-                throw new TargetNotFoundException("Cannot find matching type because scanning is not available for " + descriptor);
+                throw new TargetNotFoundException("Cannot find matching type and scanning is not available for " + descriptor);
             }
         }
     }
@@ -118,7 +118,7 @@ class Injector {
                 .filter(subDescriptor -> subDescriptor.getQualifier().equals(descriptor.getQualifier()))
                 .collect(Collectors.toList());
         if (descriptors.isEmpty()) {
-            throw new TargetNotFoundException("Cannot find matching sub type for " + descriptor.toString());
+            throw new TargetNotFoundException("Cannot find matching sub type for " + descriptor);
         } else if (descriptors.size() == 1) {
             Descriptor targetDescriptor = descriptors.get(0);
             Constructor<?> constructor = getConstructor(targetDescriptor.getCls());
@@ -126,7 +126,7 @@ class Injector {
             return constructor;
         } else {
             logger.error("Matching types for %s: %s", descriptor, descriptors);
-            throw new AmbiguousTargetException("Too many matching sub types for " + descriptor.toString());
+            throw new AmbiguousTargetException("Too many matching sub types for " + descriptor);
         }
     }
 

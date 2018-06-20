@@ -28,6 +28,10 @@ import com.nilcaream.atto.example.case015.NamedClass;
 import com.nilcaream.atto.example.case015.NamedClassHolder;
 import com.nilcaream.atto.example.case017.PinkRequester;
 import com.nilcaream.atto.example.case017.PinkSubClass;
+import com.nilcaream.atto.example.case018.DifferentNamedValuesHolder;
+import com.nilcaream.atto.example.case018.ImplementationA;
+import com.nilcaream.atto.example.case018.ImplementationB;
+import com.nilcaream.atto.example.case018.NamedValuesMismatchHolder;
 import com.nilcaream.atto.exception.AmbiguousTargetException;
 import com.nilcaream.atto.exception.AttoException;
 import com.nilcaream.atto.exception.ReflectionsNotFoundException;
@@ -346,5 +350,39 @@ public class AttoTest {
         assertNotNull(instance);
         assertNotNull(instance.getPinkWannabe());
         assertEquals(PinkSubClass.class, instance.getPinkWannabe().getClass());
+    }
+
+    @Case(18)
+    @Test
+    public void shouldInjectFollowingNamedQualifierValue() {
+        // given
+        underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerInstance(standardOutputLogger(ALL)).build();
+
+        // when
+        DifferentNamedValuesHolder instance = underTest.instance(DifferentNamedValuesHolder.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getImplementationA());
+        assertNotNull(instance.getImplementationB());
+        assertEquals(ImplementationA.class, instance.getImplementationA().getClass());
+        assertEquals(ImplementationB.class, instance.getImplementationB().getClass());
+    }
+
+    @Case(18)
+    @Test(expected = TargetNotFoundException.class)
+    public void shouldErrorOutOnNamedValuesMismatch() {
+        // given
+        underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerInstance(standardOutputLogger(ALL)).build();
+
+        // when
+        underTest.instance(NamedValuesMismatchHolder.class);
+    }
+
+    @Case(18)
+    @Test(expected = TargetNotFoundException.class)
+    public void shouldErrorOutOnNamedValuesMismatchWithoutScanner() {
+        // when
+        underTest.instance(NamedValuesMismatchHolder.class);
     }
 }
