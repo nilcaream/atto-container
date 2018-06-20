@@ -27,8 +27,8 @@
         <connection>scm:git:ssh://git@github.com/nilcaream/atto-container.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/nilcaream/atto-container.git</developerConnection>
         <url>https://github.com/nilcaream/atto-container/tree/master</url>
-      <tag>HEAD</tag>
-  </scm>
+        <tag>HEAD</tag>
+    </scm>
 
     <dependencies>
         <dependency>

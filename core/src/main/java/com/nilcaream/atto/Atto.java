@@ -6,19 +6,19 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Atto {
 
     private LoggerWrapper logger = new LoggerWrapper();
     private int maxDepth = 32;
-    private Map<Descriptor, Object> singletons = new ConcurrentHashMap<>();
+    private Map<Descriptor, Object> singletons = new HashMap<>();
 
     private Injector injector;
 
-    public <T> T instance(Class<T> cls) {
+    public synchronized <T> T instance(Class<T> cls) {
         try {
             return cls.cast(instance(injector.describe(cls), new AtomicInteger(0)));
         } catch (IllegalAccessException | InvocationTargetException | InstantiationException | IllegalArgumentException e) {
@@ -84,7 +84,7 @@ public class Atto {
             logger.setImplementation(loggerInstance);
         }
 
-        injector = Injector.builder().scanPackage(scanPackage).logger(this.logger).build();
+        injector = Injector.builder().scanPackage(scanPackage).logger(logger).build();
 
         if (maxDepth > 0) {
             this.maxDepth = maxDepth;

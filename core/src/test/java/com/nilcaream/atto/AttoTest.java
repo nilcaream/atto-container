@@ -28,10 +28,14 @@ import com.nilcaream.atto.example.case013.InnerClassInjectionExample;
 import com.nilcaream.atto.example.case014.MultipleNames;
 import com.nilcaream.atto.example.case015.NamedClass;
 import com.nilcaream.atto.example.case015.NamedClassHolder;
+import com.nilcaream.atto.example.case017.EmptySuperClass;
+import com.nilcaream.atto.example.case017.PinkRequester;
+import com.nilcaream.atto.example.case017.PinkSubClass;
 import com.nilcaream.atto.exception.AmbiguousTargetException;
 import com.nilcaream.atto.exception.AttoException;
 import com.nilcaream.atto.exception.ReflectionsNotFoundException;
 import com.nilcaream.atto.exception.TargetNotFoundException;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.stream.Stream;
@@ -340,5 +344,33 @@ public class AttoTest {
         assertNotNull(instance);
         assertNotNull(instance.getNamedSuperClass());
         assertEquals(NamedClass.class, instance.getNamedSuperClass().getClass());
+    }
+
+    @Case(17)
+    @Test
+    @Ignore("this might be a result of requirements inconsistencies")
+    public void shouldInjectNotMatchingNonAbstractClass() {
+        // when
+        PinkRequester instance = underTest.instance(PinkRequester.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getPinkWannabe());
+        assertEquals(EmptySuperClass.class, instance.getPinkWannabe().getClass());
+    }
+
+    @Case(17)
+    @Test
+    public void shouldInjectMatchingNonAbstractClassByScanning() {
+        // given
+        underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerInstance(standardOutputLogger(ALL)).build();
+
+        // when
+        PinkRequester instance = underTest.instance(PinkRequester.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getPinkWannabe());
+        assertEquals(PinkSubClass.class, instance.getPinkWannabe().getClass());
     }
 }
