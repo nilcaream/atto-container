@@ -5,12 +5,12 @@
     <parent>
         <groupId>com.nilcaream.atto</groupId>
         <artifactId>atto-parent</artifactId>
-        <version>0.2-SNAPSHOT</version>
+        <version>1.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>atto-testing</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>1.0</version>
 
     <name>Atto Container - Testing</name>
     <description>No external dependencies tests</description>
@@ -27,7 +27,7 @@
         <connection>scm:git:ssh://git@github.com/nilcaream/atto-container.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/nilcaream/atto-container.git</developerConnection>
         <url>https://github.com/nilcaream/atto-container/tree/master</url>
-        <tag>HEAD</tag>
+        <tag>v1.0</tag>
     </scm>
 
     <dependencies>
