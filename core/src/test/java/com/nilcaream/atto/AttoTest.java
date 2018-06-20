@@ -1,8 +1,5 @@
 package com.nilcaream.atto;
 
-import com.nilcaream.atto.example.MultipleNames;
-import com.nilcaream.atto.example.NamedClass;
-import com.nilcaream.atto.example.NamedClassHolder;
 import com.nilcaream.atto.example.case001.PrivateConstructor;
 import com.nilcaream.atto.example.case001.TwoPrivateConstructors;
 import com.nilcaream.atto.example.case003.ExampleImplementationBlue;
@@ -28,6 +25,9 @@ import com.nilcaream.atto.example.case012.StaticNestedClassImplementationHolder;
 import com.nilcaream.atto.example.case012.StaticNestedClassInjectionExample;
 import com.nilcaream.atto.example.case013.InnerClassImplementationHolder;
 import com.nilcaream.atto.example.case013.InnerClassInjectionExample;
+import com.nilcaream.atto.example.case014.MultipleNames;
+import com.nilcaream.atto.example.case015.NamedClass;
+import com.nilcaream.atto.example.case015.NamedClassHolder;
 import com.nilcaream.atto.exception.AmbiguousTargetException;
 import com.nilcaream.atto.exception.AttoException;
 import com.nilcaream.atto.exception.ReflectionsNotFoundException;
@@ -313,17 +313,21 @@ public class AttoTest {
         assertNotNull(InnerClassImplementationHolder.InnerClassImplementation.class.cast(instance.getImplementation()).getFieldFromOuterClass());
     }
 
-    public void should() {
+    @Case(14)
+    @Test(expected = TargetNotFoundException.class)
+    public void shouldErrorOutOnNotMatchingQualifierWithoutScanning() {
         // when
-        MultipleNames instance = underTest.instance(MultipleNames.class);
+        underTest.instance(MultipleNames.class);
     }
 
+    @Case(15)
     @Test(expected = TargetNotFoundException.class)
     public void shouldErrorOutOnNonAbstractSuperClassWithNotMatchingQualifierInjection() {
         // when
         underTest.instance(NamedClassHolder.class);
     }
 
+    @Case(15)
     @Test
     public void shouldInjectSubClassOfNonAbstractClassWithMatchingQualifier() {
         // given

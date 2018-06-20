@@ -1,4 +1,4 @@
-package com.nilcaream.atto.example;
+package com.nilcaream.atto.example.case015;
 
 import lombok.Getter;
 
@@ -9,6 +9,6 @@ import javax.inject.Named;
 public class NamedClassHolder {
 
     @Inject
-    @Named("NamedExample")
+    @Named("JustNamedClass")
     private NamedSuperClass namedSuperClass;
 }

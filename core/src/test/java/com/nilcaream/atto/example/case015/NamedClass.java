@@ -1,7 +1,7 @@
-package com.nilcaream.atto.example;
+package com.nilcaream.atto.example.case015;
 
 import javax.inject.Named;
 
-@Named("NamedExample")
+@Named("JustNamedClass")
 public class NamedClass extends NamedSuperClass {
 }
