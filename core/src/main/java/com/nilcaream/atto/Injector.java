@@ -5,7 +5,6 @@ import com.nilcaream.atto.exception.ReflectionsNotFoundException;
 import com.nilcaream.atto.exception.TargetNotFoundException;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Qualifier;
 import javax.inject.Singleton;
 import java.lang.annotation.Annotation;
@@ -17,18 +16,21 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.nilcaream.atto.Descriptor.DEFAULT_QUALIFIER;
+
 class Injector {
 
     private Scanner scanner;
 
     private Logger logger = Logger.nullLogger();
 
+
     @lombok.Builder(builderClassName = "Builder")
     private Injector(String scanPackage, Logger logger) {
         if (logger != null) {
             this.logger = logger;
         }
-        scanner = Scanner.builder().scanPackage(scanPackage).build();
+        scanner = Scanner.builder().logger(this.logger).scanPackage(scanPackage).build();
         if (scanPackage != null && !scanner.isAvailable()) {
             throw new ReflectionsNotFoundException("Reflections required on classpath for scanning package " + scanPackage);
         }
@@ -51,46 +53,25 @@ class Injector {
     }
 
     private Descriptor describe(Object source, Class<?> cls, Annotation[] annotations) {
-        String qualifier = getQualifier(cls, annotations);
+        Annotation qualifier = getQualifier(cls, annotations);
         Descriptor result = new Descriptor(cls, qualifier);
         logger.debug("%s for %s of type %s", result, source, cls.getName());
         return result;
     }
 
-    private String getQualifier(Class<?> cls, Annotation[] annotations) {
-        List<String> qualifiers = Arrays.stream(annotations)
-                .map(Annotation::annotationType)
-                .filter(type -> !Named.class.equals(type))
-                .filter(type -> type.isAnnotationPresent(Qualifier.class))
-                .map(type -> "Qualifier:" + type.getName())
+    private Annotation getQualifier(Class<?> cls, Annotation[] annotations) {
+        List<Annotation> qualifiers = Arrays.stream(annotations)
+                .filter(annotation -> annotation.annotationType().isAnnotationPresent(Qualifier.class))
                 .collect(Collectors.toList());
 
-        if (qualifiers.size() > 1) {
+        if (qualifiers.isEmpty()) {
+            return DEFAULT_QUALIFIER;
+        } else if (qualifiers.size() == 1) {
+            return qualifiers.get(0);
+        } else {
             logger.error("Qualifiers for %s: %s", cls.getName(), qualifiers);
             throw new AmbiguousTargetException("Too many Qualifier annotations for " + cls.getName() + " - " + qualifiers);
         }
-
-        List<String> names = Arrays.stream(annotations)
-                .filter(annotation -> annotation.annotationType().equals(Named.class))
-                .map(Named.class::cast)
-                .map(named -> "Named:" + named.value())
-                .collect(Collectors.toList());
-
-        if (names.size() > 1) {
-            logger.error("Names for %s: %s", cls.getName(), names);
-            throw new AmbiguousTargetException("Too many Named annotations for " + cls.getName() + " - " + names);
-        }
-
-        String result = "";
-        if (!names.isEmpty() && !qualifiers.isEmpty()) {
-            logger.error("Names and qualifiers for %s: %s %s", cls.getName(), names.get(0), qualifiers.get(0));
-            throw new AmbiguousTargetException("Both Named and Qualifier annotations are present on " + cls.getName() + " - " + names.get(0) + " " + qualifiers.get(0));
-        } else if (!names.isEmpty()) {
-            result = names.get(0);
-        } else if (!qualifiers.isEmpty()) {
-            result = qualifiers.get(0);
-        }
-        return result;
     }
 
     List<Field> getNullFields(Object instance) throws IllegalAccessException {
@@ -119,15 +100,13 @@ class Injector {
                 throw new ReflectionsNotFoundException("Reflections required on classpath for creating instances by interface or for abstract classes of " + descriptor.getCls().getName() + " type");
             }
         } else {
-            Descriptor target = describe(descriptor.getCls());
-            if (descriptor.getQualifier().isEmpty() || target.getQualifier().equals(descriptor.getQualifier())) {
-                Constructor<?> constructor = getConstructor(descriptor.getCls());
-                logger.debug("Constructor %s for %s", constructor, descriptor);
+            Constructor<?> constructor = getConstructor(descriptor.getCls());
+            if (describe(constructor.getDeclaringClass()).getQualifier().equals(descriptor.getQualifier())) {
                 return constructor;
             } else if (scanner.isAvailable()) {
                 return getConstructorByScanning(descriptor);
             } else {
-                throw new TargetNotFoundException("Cannot find matching type for " + descriptor.toString() + " and sub types scanning is not available");
+                throw new TargetNotFoundException("Cannot find matching type because scanning is not available for " + descriptor);
             }
         }
     }
@@ -136,7 +115,7 @@ class Injector {
         List<Descriptor> descriptors = scanner.subTypes(descriptor.getCls()).stream()
                 .filter(subType -> !isAbstract(subType))
                 .map(this::describe)
-                .filter(subDescriptor -> descriptor.getQualifier().isEmpty() || subDescriptor.getQualifier().equals(descriptor.getQualifier()))
+                .filter(subDescriptor -> subDescriptor.getQualifier().equals(descriptor.getQualifier()))
                 .collect(Collectors.toList());
         if (descriptors.isEmpty()) {
             throw new TargetNotFoundException("Cannot find matching sub type for " + descriptor.toString());

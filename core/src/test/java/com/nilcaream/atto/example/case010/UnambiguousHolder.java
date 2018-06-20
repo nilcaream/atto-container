@@ -9,7 +9,4 @@ public class UnambiguousHolder {
 
     @Inject
     private UnambiguousRed unambiguousRed;
-
-    @Inject
-    private UnambiguousPurple unambiguousPurple;
 }

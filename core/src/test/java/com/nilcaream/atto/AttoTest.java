@@ -17,8 +17,6 @@ import com.nilcaream.atto.example.case008.SomeImplementation;
 import com.nilcaream.atto.example.case009.SameFieldNameSub;
 import com.nilcaream.atto.example.case010.UnambiguousAbstractHolder;
 import com.nilcaream.atto.example.case010.UnambiguousHolder;
-import com.nilcaream.atto.example.case010.UnambiguousPurple;
-import com.nilcaream.atto.example.case010.UnambiguousRed;
 import com.nilcaream.atto.example.case011.ClassWithLogger;
 import com.nilcaream.atto.example.case011.LoggerImplementation;
 import com.nilcaream.atto.example.case012.StaticNestedClassImplementationHolder;
@@ -28,14 +26,12 @@ import com.nilcaream.atto.example.case013.InnerClassInjectionExample;
 import com.nilcaream.atto.example.case014.MultipleNames;
 import com.nilcaream.atto.example.case015.NamedClass;
 import com.nilcaream.atto.example.case015.NamedClassHolder;
-import com.nilcaream.atto.example.case017.EmptySuperClass;
 import com.nilcaream.atto.example.case017.PinkRequester;
 import com.nilcaream.atto.example.case017.PinkSubClass;
 import com.nilcaream.atto.exception.AmbiguousTargetException;
 import com.nilcaream.atto.exception.AttoException;
 import com.nilcaream.atto.exception.ReflectionsNotFoundException;
 import com.nilcaream.atto.exception.TargetNotFoundException;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.stream.Stream;
@@ -238,36 +234,20 @@ public class AttoTest {
     }
 
     @Case(10)
-    @Test
-    public void shouldInjectUnambiguousWithoutQualifiers() {
+    @Test(expected = TargetNotFoundException.class)
+    public void shouldErrorOutOnInjectingQualifiedBeanToDefaultField() {
         // when
-        UnambiguousHolder instance = underTest.instance(UnambiguousHolder.class);
-
-        // then
-        assertNotNull(instance);
-        assertNotNull(instance.getUnambiguousRed());
-        assertNotNull(instance.getUnambiguousPurple());
-
-        assertEquals(UnambiguousRed.class, instance.getUnambiguousRed().getClass());
-        assertEquals(UnambiguousPurple.class, instance.getUnambiguousPurple().getClass());
+        underTest.instance(UnambiguousHolder.class);
     }
 
     @Case(10)
-    @Test
-    public void shouldInjectUnambiguousWithoutQualifiersByInterface() {
+    @Test(expected = TargetNotFoundException.class)
+    public void shouldErrorOutOnInjectingQualifiedBeanToDefaultFieldByInterface() {
         // given
         underTest = Atto.builder().loggerInstance(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto.example").build();
 
         // when
-        UnambiguousAbstractHolder instance = underTest.instance(UnambiguousAbstractHolder.class);
-
-        // then
-        assertNotNull(instance);
-        assertNotNull(instance.getUnambiguousRed());
-        assertNotNull(instance.getUnambiguousPurple());
-
-        assertEquals(UnambiguousRed.class, instance.getUnambiguousRed().getClass());
-        assertEquals(UnambiguousPurple.class, instance.getUnambiguousPurple().getClass());
+        underTest.instance(UnambiguousAbstractHolder.class);
     }
 
     @Case(11)
@@ -347,16 +327,10 @@ public class AttoTest {
     }
 
     @Case(17)
-    @Test
-    @Ignore("this might be a result of requirements inconsistencies")
+    @Test(expected = TargetNotFoundException.class)
     public void shouldInjectNotMatchingNonAbstractClass() {
         // when
-        PinkRequester instance = underTest.instance(PinkRequester.class);
-
-        // then
-        assertNotNull(instance);
-        assertNotNull(instance.getPinkWannabe());
-        assertEquals(EmptySuperClass.class, instance.getPinkWannabe().getClass());
+        underTest.instance(PinkRequester.class);
     }
 
     @Case(17)

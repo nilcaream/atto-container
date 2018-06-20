@@ -1,21 +1,28 @@
 package com.nilcaream.atto;
 
+import com.nilcaream.atto.example.case003.ExampleImplementationClone1;
 import com.nilcaream.atto.example.case003.ExampleImplementationGreen;
 import com.nilcaream.atto.example.case003.ExampleInterface;
 import com.nilcaream.atto.example.case003.GreenQualifier;
 import com.nilcaream.atto.example.case003.MultipleImplementations;
+import com.nilcaream.atto.example.case004.AnotherOrange;
+import com.nilcaream.atto.example.case004.OrangeQualifier;
 import com.nilcaream.atto.example.case016.NamedExample;
 import com.nilcaream.atto.example.case016.TooManyAnnotations;
 import com.nilcaream.atto.exception.AmbiguousTargetException;
 import com.nilcaream.atto.exception.TargetNotFoundException;
 import org.junit.Test;
 
+import javax.inject.Named;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 
+import static com.nilcaream.atto.Descriptor.DEFAULT_QUALIFIER;
 import static com.nilcaream.atto.Logger.Level.ALL;
 import static com.nilcaream.atto.Logger.standardOutputLogger;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 
 public class InjectorTest {
 
@@ -30,7 +37,8 @@ public class InjectorTest {
     @Test(expected = AmbiguousTargetException.class)
     public void shouldErrorOutTooManyMatchingConstructors() {
         // given
-        Descriptor descriptor = new Descriptor(ExampleInterface.class, "Named:Clone");
+        Annotation qualifier = ExampleImplementationClone1.class.getAnnotation(Named.class);
+        Descriptor descriptor = new Descriptor(ExampleInterface.class, qualifier);
 
         // when
         underTest.getConstructor(descriptor);
@@ -39,7 +47,8 @@ public class InjectorTest {
     @Test(expected = TargetNotFoundException.class)
     public void shouldErrorOutNotFoundDescriptor() {
         // given
-        Descriptor descriptor = new Descriptor(ExampleInterface.class, "Named:NotFoundAnywhere");
+        Annotation qualifier = AnotherOrange.class.getAnnotation(OrangeQualifier.class);
+        Descriptor descriptor = new Descriptor(ExampleInterface.class, qualifier);
 
         // when
         underTest.getConstructor(descriptor);
@@ -56,7 +65,7 @@ public class InjectorTest {
         // then
         assertNotNull(descriptor);
         assertEquals(ExampleInterface.class, descriptor.getCls());
-        assertEquals("Named:Blue", descriptor.getQualifier());
+        assertEquals(field.getAnnotation(Named.class), descriptor.getQualifier());
     }
 
     @Test
@@ -70,7 +79,7 @@ public class InjectorTest {
         // then
         assertNotNull(descriptor);
         assertEquals(ExampleInterface.class, descriptor.getCls());
-        assertEquals("Qualifier:" + GreenQualifier.class.getName(), descriptor.getQualifier());
+        assertEquals(field.getAnnotation(GreenQualifier.class), descriptor.getQualifier());
     }
 
     @Test
@@ -81,28 +90,33 @@ public class InjectorTest {
         // then
         assertNotNull(descriptor);
         assertEquals(MultipleImplementations.class, descriptor.getCls());
-        assertEquals("", descriptor.getQualifier());
+        assertSame(DEFAULT_QUALIFIER, descriptor.getQualifier());
     }
 
     @Test
     public void shouldDescribeNamedClass() {
         // when
+        Named qualifier = NamedExample.class.getAnnotation(Named.class);
         Descriptor descriptor = underTest.describe(NamedExample.class);
 
         // then
         assertNotNull(descriptor);
         assertEquals(NamedExample.class, descriptor.getCls());
-        assertEquals("Named:TestName", descriptor.getQualifier());
+        assertEquals(qualifier, descriptor.getQualifier());
+        assertEquals("TestName", Named.class.cast(descriptor.getQualifier()).value());
     }
 
     @Test
     public void shouldDescribeQualifiedClass() {
         // when
+        GreenQualifier qualifier = ExampleImplementationGreen.class.getAnnotation(GreenQualifier.class);
         Descriptor descriptor = underTest.describe(ExampleImplementationGreen.class);
 
         // then
         assertNotNull(descriptor);
         assertEquals(ExampleImplementationGreen.class, descriptor.getCls());
-        assertEquals("Qualifier:com.nilcaream.atto.example.case003.GreenQualifier", descriptor.getQualifier());
+        assertSame(qualifier, descriptor.getQualifier());
     }
+
 }
+

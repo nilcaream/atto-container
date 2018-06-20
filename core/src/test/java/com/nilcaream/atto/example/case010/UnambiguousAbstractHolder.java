@@ -9,7 +9,4 @@ public class UnambiguousAbstractHolder {
 
     @Inject
     private UnambiguousRedInterface unambiguousRed;
-
-    @Inject
-    private UnambiguousPurpleInterface unambiguousPurple;
 }
