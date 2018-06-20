@@ -1,4 +1,4 @@
-package com.nilcaream.atto.example.case004;
+package com.nilcaream.atto.example.case007;
 
 import lombok.Getter;
 

@@ -7,9 +7,9 @@ import javax.inject.Singleton;
 
 @Getter
 @Singleton
-public class Singleton8 {
+public class SomeSingleton {
 
     @Inject
-    private Prototype8 prototype8;
+    private SomePrototype somePrototype;
 
 }

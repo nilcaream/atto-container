@@ -1,11 +1,11 @@
 package com.nilcaream.atto;
 
-import com.nilcaream.atto.example.GreenQualifier;
 import com.nilcaream.atto.example.MultipleNames;
 import com.nilcaream.atto.example.NamedExample;
 import com.nilcaream.atto.example.TooManyAnnotations;
 import com.nilcaream.atto.example.case003.ExampleImplementationGreen;
 import com.nilcaream.atto.example.case003.ExampleInterface;
+import com.nilcaream.atto.example.case003.GreenQualifier;
 import com.nilcaream.atto.example.case003.MultipleImplementations;
 import com.nilcaream.atto.exception.AmbiguousTargetException;
 import com.nilcaream.atto.exception.TargetNotFoundException;
@@ -104,7 +104,7 @@ public class InjectorTest {
         // then
         assertNotNull(descriptor);
         assertEquals(ExampleImplementationGreen.class, descriptor.getCls());
-        assertEquals("Qualifier:com.nilcaream.atto.example.GreenQualifier", descriptor.getQualifier());
+        assertEquals("Qualifier:com.nilcaream.atto.example.case003.GreenQualifier", descriptor.getQualifier());
     }
 
     public void should() throws NoSuchFieldException {

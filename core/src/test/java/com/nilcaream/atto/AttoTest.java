@@ -3,19 +3,21 @@ package com.nilcaream.atto;
 import com.nilcaream.atto.example.MultipleNames;
 import com.nilcaream.atto.example.NamedClass;
 import com.nilcaream.atto.example.NamedClassHolder;
-import com.nilcaream.atto.example.case001.AmbiguousConstructors;
-import com.nilcaream.atto.example.case002.PrivateConstructor;
-import com.nilcaream.atto.example.case003.ConstructorInjection;
-import com.nilcaream.atto.example.case003.ConstructorInjectionSimple;
+import com.nilcaream.atto.example.case001.PrivateConstructor;
+import com.nilcaream.atto.example.case001.TwoPrivateConstructors;
 import com.nilcaream.atto.example.case003.ExampleImplementationBlue;
 import com.nilcaream.atto.example.case003.ExampleImplementationGreen;
 import com.nilcaream.atto.example.case003.MultipleImplementations;
-import com.nilcaream.atto.example.case004.CyclicPrototype;
+import com.nilcaream.atto.example.case004.AnotherOrange;
+import com.nilcaream.atto.example.case004.AnotherWhite;
+import com.nilcaream.atto.example.case004.ConstructorInjection;
+import com.nilcaream.atto.example.case004.ConstructorInjectionSimple;
 import com.nilcaream.atto.example.case005.StaticFinalFieldExample;
 import com.nilcaream.atto.example.case006.SingletonImplementation;
 import com.nilcaream.atto.example.case007.CyclicDependencies1;
-import com.nilcaream.atto.example.case008.Implementation8;
-import com.nilcaream.atto.example.case009.SameFieldNameChild;
+import com.nilcaream.atto.example.case007.CyclicPrototype;
+import com.nilcaream.atto.example.case008.SomeImplementation;
+import com.nilcaream.atto.example.case009.SameFieldNameSub;
 import com.nilcaream.atto.example.case010.UnambiguousAbstractHolder;
 import com.nilcaream.atto.example.case010.UnambiguousHolder;
 import com.nilcaream.atto.example.case010.UnambiguousPurple;
@@ -48,12 +50,12 @@ public class AttoTest {
 
     @Case(1)
     @Test(expected = AmbiguousTargetException.class)
-    public void shouldErrorOutOnAmbiguousConstructors() {
+    public void shouldErrorOutOnMultiplePublicConstructors() {
         // when
-        underTest.instance(AmbiguousConstructors.class);
+        underTest.instance(TwoPrivateConstructors.class);
     }
 
-    @Case(2)
+    @Case(1)
     @Test(expected = TargetNotFoundException.class)
     public void shouldErrorOutOnPrivateConstructor() {
         // when
@@ -62,33 +64,9 @@ public class AttoTest {
 
     @Case(3)
     @Test(expected = ReflectionsNotFoundException.class)
-    public void shouldErrorOutForInterfacesWithoutScanner() {
+    public void shouldErrorOutForInterfaceInjectionWithoutScanner() {
         // when
         underTest.instance(MultipleImplementations.class);
-    }
-
-    @Case(4)
-    @Test(expected = AttoException.class)
-    public void shouldErrorOutCyclicPrototype() {
-        // when
-        underTest.instance(CyclicPrototype.class);
-    }
-
-    @Case(5)
-    @Test(expected = AttoException.class)
-    public void shouldErrorOutStaticFinalFieldInjection() {
-        // when
-        underTest.instance(StaticFinalFieldExample.class);
-    }
-
-    @Case(6)
-    @Test(expected = AttoException.class)
-    public void shouldErrorOutOnTooShallowInjection() {
-        // given
-        underTest = Atto.builder().loggerInstance(standardOutputLogger(ALL)).maxDepth(1).build();
-
-        // when
-        underTest.instance(SingletonImplementation.class);
     }
 
     @Case(3)
@@ -126,6 +104,69 @@ public class AttoTest {
         assertSame(instance1.getBlue1(), instance2.getBlue1());
         assertSame(instance1.getBlue1(), instance2.getBlue2());
         assertSame(instance1.getBlue2(), instance2.getBlue1());
+    }
+
+    @Case(4)
+    @Test
+    public void shouldInjectByConstructorWithScanning() {
+        // given
+        underTest = Atto.builder().loggerInstance(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto.example").build();
+
+        // when
+        ConstructorInjection instance = underTest.instance(ConstructorInjection.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getWhite());
+        assertNotNull(instance.getOrange());
+        assertNotNull(instance.getAnotherPrototypeField());
+        assertNotNull(instance.getAnotherPrototypeFinal());
+
+        assertEquals(AnotherOrange.class, instance.getOrange().getClass());
+        assertEquals(AnotherWhite.class, instance.getWhite().getClass());
+        assertNotSame(instance.getAnotherPrototypeFinal(), instance.getAnotherPrototypeField());
+    }
+
+    @Case(4)
+    @Test
+    public void shouldInjectByConstructorWithoutScanning() {
+        // when
+        ConstructorInjectionSimple instance = underTest.instance(ConstructorInjectionSimple.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getWhite());
+        assertNotNull(instance.getOrange());
+        assertNotNull(instance.getAnotherPrototypeField());
+        assertNotNull(instance.getAnotherPrototypeFinal());
+
+        assertEquals(AnotherOrange.class, instance.getOrange().getClass());
+        assertEquals(AnotherWhite.class, instance.getWhite().getClass());
+        assertNotSame(instance.getAnotherPrototypeFinal(), instance.getAnotherPrototypeField());
+    }
+
+    @Case(5)
+    @Test(expected = AttoException.class)
+    public void shouldErrorOutStaticFinalFieldInjection() {
+        // when
+        underTest.instance(StaticFinalFieldExample.class);
+    }
+
+    @Case(6)
+    @Test(expected = AttoException.class)
+    public void shouldErrorOutOnTooShallowInjection() {
+        // given
+        underTest = Atto.builder().loggerInstance(standardOutputLogger(ALL)).maxDepth(1).build();
+
+        // when
+        underTest.instance(SingletonImplementation.class);
+    }
+
+    @Case(7)
+    @Test(expected = AttoException.class)
+    public void shouldErrorOutCyclicPrototype() {
+        // when
+        underTest.instance(CyclicPrototype.class);
     }
 
     @Case(7)
@@ -168,66 +209,28 @@ public class AttoTest {
     @Test
     public void shouldInjectFieldsOfSuperClass() {
         // when
-        Implementation8 instance = underTest.instance(Implementation8.class);
+        SomeImplementation instance = underTest.instance(SomeImplementation.class);
 
         // then
         assertNotNull(instance);
-        assertNotNull(instance.getPrototype8());
-        assertNotNull(instance.getPrototypeSub());
-        assertNotNull(instance.getSingletonSub());
+        assertNotNull(instance.getSomePrototypeSub());
+        assertNotNull(instance.getSomeSingletonSub());
+        assertNotNull(instance.getSomePrototypeSuper());
 
-        assertNotSame(instance.getPrototypeSub(), instance.getPrototype8());
+        assertNotSame(instance.getSomePrototypeSub(), instance.getSomePrototypeSuper());
     }
 
     @Case(9)
     @Test
     public void shouldInjectFieldsWithSameName() {
         // when
-        SameFieldNameChild instance = underTest.instance(SameFieldNameChild.class);
+        SameFieldNameSub instance = underTest.instance(SameFieldNameSub.class);
 
         // then
         assertNotNull(instance);
-        assertNotNull(instance.getTheNameFromChild());
-        assertNotNull(instance.getTheNameFromParent());
-    }
-
-    @Case(3)
-    @Test
-    public void shouldInjectByConstructorWithScanning() {
-        // given
-        underTest = Atto.builder().loggerInstance(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto.example").build();
-
-        // when
-        ConstructorInjection instance = underTest.instance(ConstructorInjection.class);
-
-        // then
-        assertNotNull(instance);
-        assertNotNull(instance.getBlue());
-        assertNotNull(instance.getGreen());
-        assertNotNull(instance.getRegularPrototype());
-        assertNotNull(instance.getRegularPrototypeField());
-
-        assertEquals(ExampleImplementationBlue.class, instance.getBlue().getClass());
-        assertEquals(ExampleImplementationGreen.class, instance.getGreen().getClass());
-        assertNotSame(instance.getRegularPrototypeField(), instance.getRegularPrototype());
-    }
-
-    @Case(3)
-    @Test
-    public void shouldInjectByConstructorWithoutScanning() {
-        // when
-        ConstructorInjectionSimple instance = underTest.instance(ConstructorInjectionSimple.class);
-
-        // then
-        assertNotNull(instance);
-        assertNotNull(instance.getBlue());
-        assertNotNull(instance.getGreen());
-        assertNotNull(instance.getRegularPrototype());
-        assertNotNull(instance.getRegularPrototypeField());
-
-        assertEquals(ExampleImplementationBlue.class, instance.getBlue().getClass());
-        assertEquals(ExampleImplementationGreen.class, instance.getGreen().getClass());
-        assertNotSame(instance.getRegularPrototypeField(), instance.getRegularPrototype());
+        assertNotNull(instance.getTheName());
+        assertNotNull(instance.getTheNameSub());
+        assertNotSame(instance.getTheNameSub(), instance.getTheName());
     }
 
     @Case(10)

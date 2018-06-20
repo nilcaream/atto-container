@@ -7,12 +7,12 @@ import javax.inject.Singleton;
 
 @Getter
 @Singleton
-public class Implementation8 extends AbstractClass8 {
+public class SomeImplementation extends SomeAbstractClass {
 
     @Inject
-    private Prototype8 prototypeSub;
+    private SomePrototype somePrototypeSub;
 
     @Inject
-    private Singleton8 singletonSub;
+    private SomeSingleton someSingletonSub;
 
 }

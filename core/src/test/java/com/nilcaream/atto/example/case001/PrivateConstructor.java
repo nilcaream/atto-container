@@ -1,4 +1,4 @@
-package com.nilcaream.atto.example.case002;
+package com.nilcaream.atto.example.case001;
 
 public class PrivateConstructor {
 

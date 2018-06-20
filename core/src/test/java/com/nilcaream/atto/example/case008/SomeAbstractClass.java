@@ -5,8 +5,8 @@ import lombok.Getter;
 import javax.inject.Inject;
 
 @Getter
-public abstract class AbstractClass8 {
+public abstract class SomeAbstractClass {
 
     @Inject
-    private Prototype8 prototype8;
+    private SomePrototype somePrototypeSuper;
 }

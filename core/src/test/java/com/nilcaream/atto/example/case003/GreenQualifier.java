@@ -1,4 +1,4 @@
-package com.nilcaream.atto.example;
+package com.nilcaream.atto.example.case003;
 
 import javax.inject.Qualifier;
 import java.lang.annotation.Retention;
