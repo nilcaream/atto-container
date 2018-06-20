@@ -1,11 +1,12 @@
 package com.nilcaream.atto;
 
-import com.nilcaream.atto.example.ExampleImplementationGreen;
-import com.nilcaream.atto.example.ExampleInterface;
 import com.nilcaream.atto.example.GreenQualifier;
-import com.nilcaream.atto.example.MultipleImplementations;
+import com.nilcaream.atto.example.MultipleNames;
 import com.nilcaream.atto.example.NamedExample;
 import com.nilcaream.atto.example.TooManyAnnotations;
+import com.nilcaream.atto.example.case003.ExampleImplementationGreen;
+import com.nilcaream.atto.example.case003.ExampleInterface;
+import com.nilcaream.atto.example.case003.MultipleImplementations;
 import com.nilcaream.atto.exception.AmbiguousTargetException;
 import com.nilcaream.atto.exception.TargetNotFoundException;
 import org.junit.Test;
@@ -104,5 +105,16 @@ public class InjectorTest {
         assertNotNull(descriptor);
         assertEquals(ExampleImplementationGreen.class, descriptor.getCls());
         assertEquals("Qualifier:com.nilcaream.atto.example.GreenQualifier", descriptor.getQualifier());
+    }
+
+    public void should() throws NoSuchFieldException {
+        // given
+        Field field = MultipleNames.class.getDeclaredField("alreadyNamed");
+
+        // when
+        Descriptor descriptor = underTest.describe(field);
+
+        // then
+        assertNotNull(descriptor);
     }
 }

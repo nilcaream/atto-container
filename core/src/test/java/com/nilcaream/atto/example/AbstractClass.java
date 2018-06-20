@@ -1,5 +1,6 @@
 package com.nilcaream.atto.example;
 
+import com.nilcaream.atto.example.case008.Prototype8;
 import lombok.Getter;
 
 import javax.inject.Inject;
@@ -8,5 +9,5 @@ import javax.inject.Inject;
 public abstract class AbstractClass {
 
     @Inject
-    private RegularPrototype regularPrototype;
+    private Prototype8 regularPrototype;
 }

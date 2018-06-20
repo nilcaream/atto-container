@@ -1,10 +1,10 @@
 package com.nilcaream.atto;
 
-import com.nilcaream.atto.example.ExampleImplementationBlue;
-import com.nilcaream.atto.example.ExampleImplementationClone1;
-import com.nilcaream.atto.example.ExampleImplementationClone2;
-import com.nilcaream.atto.example.ExampleImplementationGreen;
-import com.nilcaream.atto.example.ExampleInterface;
+import com.nilcaream.atto.example.case003.ExampleImplementationBlue;
+import com.nilcaream.atto.example.case003.ExampleImplementationClone1;
+import com.nilcaream.atto.example.case003.ExampleImplementationClone2;
+import com.nilcaream.atto.example.case003.ExampleImplementationGreen;
+import com.nilcaream.atto.example.case003.ExampleInterface;
 import com.nilcaream.atto.exception.ReflectionsNotFoundException;
 import org.junit.Test;
 

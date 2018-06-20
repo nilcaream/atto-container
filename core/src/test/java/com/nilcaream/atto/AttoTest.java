@@ -1,27 +1,31 @@
 package com.nilcaream.atto;
 
-import com.nilcaream.atto.example.AmbiguousConstructors;
-import com.nilcaream.atto.example.ClassWithLogger;
-import com.nilcaream.atto.example.ConstructorInjection;
-import com.nilcaream.atto.example.ConstructorInjectionSimple;
-import com.nilcaream.atto.example.CyclicDependencies1;
-import com.nilcaream.atto.example.CyclicPrototype;
-import com.nilcaream.atto.example.ExampleImplementationBlue;
-import com.nilcaream.atto.example.ExampleImplementationGreen;
-import com.nilcaream.atto.example.InnerClassImplementationHolder;
-import com.nilcaream.atto.example.InnerClassInjectionExample;
-import com.nilcaream.atto.example.LoggerImplementation;
-import com.nilcaream.atto.example.MultipleImplementations;
-import com.nilcaream.atto.example.PrivateConstructor;
-import com.nilcaream.atto.example.SameFieldNameChild;
-import com.nilcaream.atto.example.SingletonImplementation;
-import com.nilcaream.atto.example.StaticFinalFieldExample;
-import com.nilcaream.atto.example.StaticNestedClassImplementationHolder;
-import com.nilcaream.atto.example.StaticNestedClassInjectionExample;
-import com.nilcaream.atto.example.UnambiguousAbstractHolder;
-import com.nilcaream.atto.example.UnambiguousHolder;
-import com.nilcaream.atto.example.UnambiguousPurple;
-import com.nilcaream.atto.example.UnambiguousRed;
+import com.nilcaream.atto.example.MultipleNames;
+import com.nilcaream.atto.example.NamedClass;
+import com.nilcaream.atto.example.NamedClassHolder;
+import com.nilcaream.atto.example.case001.AmbiguousConstructors;
+import com.nilcaream.atto.example.case002.PrivateConstructor;
+import com.nilcaream.atto.example.case003.ConstructorInjection;
+import com.nilcaream.atto.example.case003.ConstructorInjectionSimple;
+import com.nilcaream.atto.example.case003.ExampleImplementationBlue;
+import com.nilcaream.atto.example.case003.ExampleImplementationGreen;
+import com.nilcaream.atto.example.case003.MultipleImplementations;
+import com.nilcaream.atto.example.case004.CyclicPrototype;
+import com.nilcaream.atto.example.case005.StaticFinalFieldExample;
+import com.nilcaream.atto.example.case006.SingletonImplementation;
+import com.nilcaream.atto.example.case007.CyclicDependencies1;
+import com.nilcaream.atto.example.case008.Implementation8;
+import com.nilcaream.atto.example.case009.SameFieldNameChild;
+import com.nilcaream.atto.example.case010.UnambiguousAbstractHolder;
+import com.nilcaream.atto.example.case010.UnambiguousHolder;
+import com.nilcaream.atto.example.case010.UnambiguousPurple;
+import com.nilcaream.atto.example.case010.UnambiguousRed;
+import com.nilcaream.atto.example.case011.ClassWithLogger;
+import com.nilcaream.atto.example.case011.LoggerImplementation;
+import com.nilcaream.atto.example.case012.StaticNestedClassImplementationHolder;
+import com.nilcaream.atto.example.case012.StaticNestedClassInjectionExample;
+import com.nilcaream.atto.example.case013.InnerClassImplementationHolder;
+import com.nilcaream.atto.example.case013.InnerClassInjectionExample;
 import com.nilcaream.atto.exception.AmbiguousTargetException;
 import com.nilcaream.atto.exception.AttoException;
 import com.nilcaream.atto.exception.ReflectionsNotFoundException;
@@ -42,36 +46,42 @@ public class AttoTest {
 
     private Atto underTest = Atto.builder().loggerInstance(standardOutputLogger(ALL)).build();
 
+    @Case(1)
     @Test(expected = AmbiguousTargetException.class)
     public void shouldErrorOutOnAmbiguousConstructors() {
         // when
         underTest.instance(AmbiguousConstructors.class);
     }
 
+    @Case(2)
     @Test(expected = TargetNotFoundException.class)
     public void shouldErrorOutOnPrivateConstructor() {
         // when
         underTest.instance(PrivateConstructor.class);
     }
 
+    @Case(3)
     @Test(expected = ReflectionsNotFoundException.class)
     public void shouldErrorOutForInterfacesWithoutScanner() {
         // when
         underTest.instance(MultipleImplementations.class);
     }
 
+    @Case(4)
     @Test(expected = AttoException.class)
     public void shouldErrorOutCyclicPrototype() {
         // when
         underTest.instance(CyclicPrototype.class);
     }
 
+    @Case(5)
     @Test(expected = AttoException.class)
     public void shouldErrorOutStaticFinalFieldInjection() {
         // when
         underTest.instance(StaticFinalFieldExample.class);
     }
 
+    @Case(6)
     @Test(expected = AttoException.class)
     public void shouldErrorOutOnTooShallowInjection() {
         // given
@@ -81,6 +91,7 @@ public class AttoTest {
         underTest.instance(SingletonImplementation.class);
     }
 
+    @Case(3)
     @Test
     public void shouldInjectMultipleImplementations() {
         // given
@@ -117,6 +128,7 @@ public class AttoTest {
         assertSame(instance1.getBlue2(), instance2.getBlue1());
     }
 
+    @Case(7)
     @Test
     public void shouldSupportCyclicDependenciesFieldInjection1() {
         // when
@@ -152,20 +164,22 @@ public class AttoTest {
         assertSame(instance.getCyclicDependencies3(), instance.getCyclicDependencies3().getCyclicDependencies3());
     }
 
+    @Case(8)
     @Test
     public void shouldInjectFieldsOfSuperClass() {
         // when
-        SingletonImplementation instance = underTest.instance(SingletonImplementation.class);
+        Implementation8 instance = underTest.instance(Implementation8.class);
 
         // then
         assertNotNull(instance);
-        assertNotNull(instance.getRegularPrototype());
-        assertNotNull(instance.getRegularPrototypeSub());
-        assertNotNull(instance.getRegularSingletonSub());
+        assertNotNull(instance.getPrototype8());
+        assertNotNull(instance.getPrototypeSub());
+        assertNotNull(instance.getSingletonSub());
 
-        assertNotSame(instance.getRegularPrototype(), instance.getRegularPrototypeSub());
+        assertNotSame(instance.getPrototypeSub(), instance.getPrototype8());
     }
 
+    @Case(9)
     @Test
     public void shouldInjectFieldsWithSameName() {
         // when
@@ -177,6 +191,7 @@ public class AttoTest {
         assertNotNull(instance.getTheNameFromParent());
     }
 
+    @Case(3)
     @Test
     public void shouldInjectByConstructorWithScanning() {
         // given
@@ -197,6 +212,7 @@ public class AttoTest {
         assertNotSame(instance.getRegularPrototypeField(), instance.getRegularPrototype());
     }
 
+    @Case(3)
     @Test
     public void shouldInjectByConstructorWithoutScanning() {
         // when
@@ -214,6 +230,7 @@ public class AttoTest {
         assertNotSame(instance.getRegularPrototypeField(), instance.getRegularPrototype());
     }
 
+    @Case(10)
     @Test
     public void shouldInjectUnambiguousWithoutQualifiers() {
         // when
@@ -228,6 +245,7 @@ public class AttoTest {
         assertEquals(UnambiguousPurple.class, instance.getUnambiguousPurple().getClass());
     }
 
+    @Case(10)
     @Test
     public void shouldInjectUnambiguousWithoutQualifiersByInterface() {
         // given
@@ -245,6 +263,7 @@ public class AttoTest {
         assertEquals(UnambiguousPurple.class, instance.getUnambiguousPurple().getClass());
     }
 
+    @Case(11)
     @Test
     public void shouldCreateInstanceWithCustomLogger() {
         // given
@@ -260,6 +279,7 @@ public class AttoTest {
         assertTrue(LoggerImplementation.getLogs().contains(LoggerImplementation.class.getName()));
     }
 
+    @Case(12)
     @Test
     public void shouldInjectStaticNestedClassInstance() {
         // given
@@ -274,6 +294,7 @@ public class AttoTest {
         assertEquals(StaticNestedClassImplementationHolder.StaticNestedClassImplementation.class, instance.getImplementation().getClass());
     }
 
+    @Case(13)
     @Test
     public void shouldInjectInnerClassInstanceAndOuterClassField() {
         // given
@@ -287,5 +308,30 @@ public class AttoTest {
         assertNotNull(instance.getImplementation());
         assertEquals(InnerClassImplementationHolder.InnerClassImplementation.class, instance.getImplementation().getClass());
         assertNotNull(InnerClassImplementationHolder.InnerClassImplementation.class.cast(instance.getImplementation()).getFieldFromOuterClass());
+    }
+
+    public void should() {
+        // when
+        MultipleNames instance = underTest.instance(MultipleNames.class);
+    }
+
+    @Test(expected = TargetNotFoundException.class)
+    public void shouldErrorOutOnNonAbstractSuperClassWithNotMatchingQualifierInjection() {
+        // when
+        underTest.instance(NamedClassHolder.class);
+    }
+
+    @Test
+    public void shouldInjectSubClassOfNonAbstractClassWithMatchingQualifier() {
+        // given
+        underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerInstance(standardOutputLogger(ALL)).build();
+
+        // when
+        NamedClassHolder instance = underTest.instance(NamedClassHolder.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getNamedSuperClass());
+        assertEquals(NamedClass.class, instance.getNamedSuperClass().getClass());
     }
 }
