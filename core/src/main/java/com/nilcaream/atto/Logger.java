@@ -3,7 +3,6 @@ package com.nilcaream.atto;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.function.BiConsumer;
-import java.util.logging.LogManager;
 
 public interface Logger extends BiConsumer<Logger.Level, String> {
 
@@ -56,7 +55,7 @@ public interface Logger extends BiConsumer<Logger.Level, String> {
 
     static Logger javaUtilLogger() {
         return new Logger() {
-            java.util.logging.Logger logger = LogManager.getLogManager().getLogger("com.nilcaream.atto");
+            java.util.logging.Logger logger = java.util.logging.Logger.getLogger("com.nilcaream.atto");
 
             @Override
             public void accept(Level level, String message) {

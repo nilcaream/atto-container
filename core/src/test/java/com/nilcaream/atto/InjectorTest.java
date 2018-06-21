@@ -10,6 +10,7 @@ import com.nilcaream.atto.example.case004.OrangeQualifier;
 import com.nilcaream.atto.example.case016.NamedExample;
 import com.nilcaream.atto.example.case016.TooManyAnnotations;
 import com.nilcaream.atto.exception.AmbiguousTargetException;
+import com.nilcaream.atto.exception.ReflectionsNotFoundException;
 import com.nilcaream.atto.exception.TargetNotFoundException;
 import org.junit.Test;
 
@@ -20,6 +21,7 @@ import java.lang.reflect.Field;
 import static com.nilcaream.atto.Descriptor.DEFAULT_QUALIFIER;
 import static com.nilcaream.atto.Logger.Level.ALL;
 import static com.nilcaream.atto.Logger.standardOutputLogger;
+import static com.nilcaream.atto.ScannerUtil.runOnReflectionsDisabled;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
@@ -118,5 +120,18 @@ public class InjectorTest {
         assertSame(qualifier, descriptor.getQualifier());
     }
 
+    @Test(expected = NullPointerException.class)
+    public void shouldRestrictNullForDescriptor() {
+        // when
+        new Descriptor(getClass(), null);
+    }
+
+    @Test(expected = ReflectionsNotFoundException.class)
+    public void shouldBeUnavailableForMissingReflections() {
+        runOnReflectionsDisabled(() -> {
+            // when
+            Injector.builder().logger(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto").build();
+        });
+    }
 }
 

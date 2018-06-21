@@ -48,7 +48,9 @@ import org.junit.Test;
 import java.util.stream.Stream;
 
 import static com.nilcaream.atto.Logger.Level.ALL;
+import static com.nilcaream.atto.Logger.javaUtilLogger;
 import static com.nilcaream.atto.Logger.standardOutputLogger;
+import static com.nilcaream.atto.ScannerUtil.runOnReflectionsDisabled;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
@@ -289,6 +291,19 @@ public class AttoTest {
         assertTrue(LoggerImplementation.getLogs().contains(LoggerImplementation.class.getName()));
     }
 
+    @Case(11)
+    @Test
+    public void shouldCreateInstanceWithJulLogger() {
+        // given
+        underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerInstance(javaUtilLogger()).build();
+
+        // when
+        ClassWithLogger instance = underTest.instance(ClassWithLogger.class);
+
+        // then
+        assertEquals(LoggerImplementation.class, instance.getLogger().getClass());
+    }
+
     @Case(12)
     @Test
     public void shouldInjectStaticNestedClassInstance() {
@@ -455,5 +470,13 @@ public class AttoTest {
     public void shouldErrorOutOnTooBroadProviderInjectionByConstructor() {
         // when
         underTest.instance(WildcardProviderConstructorHolder.class);
+    }
+
+    @Test(expected = ReflectionsNotFoundException.class)
+    public void shouldBeUnavailableForMissingReflections() {
+        runOnReflectionsDisabled(() -> {
+            // when
+            Atto.builder().loggerInstance(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto").build();
+        });
     }
 }

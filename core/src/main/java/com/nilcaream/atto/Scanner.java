@@ -7,6 +7,9 @@ import java.util.Set;
 
 class Scanner {
 
+    // visible for testing only
+    static String reflectionsCheckClass = "org.reflections.Reflections";
+
     private Logger logger = Logger.nullLogger();
 
     private Reflections reflections;
@@ -20,7 +23,7 @@ class Scanner {
         }
         if (scanPackage != null) {
             try {
-                Class.forName("org.reflections.Reflections");
+                Class.forName(reflectionsCheckClass);
                 reflections = new Reflections(scanPackage);
                 available = true;
                 this.logger.debug("Classpath scanning enabled for package " + scanPackage);

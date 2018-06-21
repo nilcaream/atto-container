@@ -12,6 +12,7 @@ import java.util.Set;
 
 import static com.nilcaream.atto.Logger.Level.ALL;
 import static com.nilcaream.atto.Logger.standardOutputLogger;
+import static com.nilcaream.atto.ScannerUtil.runOnReflectionsDisabled;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -45,4 +46,14 @@ public class ScannerTest {
         assertTrue(implementations.contains(ExampleImplementationClone2.class));
     }
 
+    @Test
+    public void shouldBeUnavailableForMissingReflections() {
+        runOnReflectionsDisabled(() -> {
+            // when
+            Scanner underTest = Scanner.builder().logger(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto").build();
+
+            // then
+            assertFalse(underTest.isAvailable());
+        });
+    }
 }
