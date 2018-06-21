@@ -13,10 +13,4 @@ public class InjectorDepTest {
         // when
         Injector.builder().logger(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto").build();
     }
-
-    @Test(expected = NullPointerException.class)
-    public void shouldRestrictNullForDescriptor() {
-        // when
-        new Descriptor(getClass(), null);
-    }
 }

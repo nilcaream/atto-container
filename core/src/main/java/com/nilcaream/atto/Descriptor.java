@@ -20,7 +20,7 @@ class Descriptor {
 
         @Override
         public Class<? extends Annotation> annotationType() {
-            return Default.class;
+            return getClass();
         }
 
         @Override
