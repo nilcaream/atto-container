@@ -2,6 +2,7 @@ package com.nilcaream.atto;
 
 import com.nilcaream.atto.example.case001.PrivateConstructor;
 import com.nilcaream.atto.example.case001.TwoPrivateConstructors;
+import com.nilcaream.atto.example.case002.AttoHolder;
 import com.nilcaream.atto.example.case003.ExampleImplementationBlue;
 import com.nilcaream.atto.example.case003.ExampleImplementationGreen;
 import com.nilcaream.atto.example.case003.MultipleImplementations;
@@ -32,6 +33,12 @@ import com.nilcaream.atto.example.case018.DifferentNamedValuesHolder;
 import com.nilcaream.atto.example.case018.ImplementationA;
 import com.nilcaream.atto.example.case018.ImplementationB;
 import com.nilcaream.atto.example.case018.NamedValuesMismatchHolder;
+import com.nilcaream.atto.example.case019.ProviderConstructorHolder;
+import com.nilcaream.atto.example.case019.ProviderFieldHolder;
+import com.nilcaream.atto.example.case019.UnknownProviderConstructorHolder;
+import com.nilcaream.atto.example.case019.UnknownProviderFieldHolder;
+import com.nilcaream.atto.example.case019.WildcardProviderConstructorHolder;
+import com.nilcaream.atto.example.case019.WildcardProviderFieldHolder;
 import com.nilcaream.atto.exception.AmbiguousTargetException;
 import com.nilcaream.atto.exception.AttoException;
 import com.nilcaream.atto.exception.ReflectionsNotFoundException;
@@ -64,6 +71,18 @@ public class AttoTest {
     public void shouldErrorOutOnPrivateConstructor() {
         // when
         underTest.instance(PrivateConstructor.class);
+    }
+
+    @Case(2)
+    @Test
+    public void shouldInjectAttoSingleton() {
+        // when
+        AttoHolder instance = underTest.instance(AttoHolder.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getAtto());
+        assertSame(underTest, instance.getAtto());
     }
 
     @Case(3)
@@ -384,5 +403,57 @@ public class AttoTest {
     public void shouldErrorOutOnNamedValuesMismatchWithoutScanner() {
         // when
         underTest.instance(NamedValuesMismatchHolder.class);
+    }
+
+    @Case(19)
+    @Test
+    public void shouldInjectProviderField() {
+        // when
+        ProviderFieldHolder instance = underTest.instance(ProviderFieldHolder.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getSingletonProvider().get());
+        assertSame(instance.getSingletonProvider().get(), instance.getSingletonProvider().get());
+    }
+
+    @Case(19)
+    @Test
+    public void shouldInjectProviderByConstructor() {
+        // when
+        ProviderConstructorHolder instance = underTest.instance(ProviderConstructorHolder.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getSingletonProvider().get());
+        assertSame(instance.getSingletonProvider().get(), instance.getSingletonProvider().get());
+    }
+
+    @Case(19)
+    @Test(expected = AmbiguousTargetException.class)
+    public void shouldErrorOutOnUnspecifiedProviderFieldInjection() {
+        // when
+        underTest.instance(UnknownProviderFieldHolder.class);
+    }
+
+    @Case(19)
+    @Test(expected = AmbiguousTargetException.class)
+    public void shouldErrorOutOnUnspecifiedProviderInjectionByConstructor() {
+        // when
+        underTest.instance(UnknownProviderConstructorHolder.class);
+    }
+
+    @Case(19)
+    @Test(expected = AmbiguousTargetException.class)
+    public void shouldErrorOutOnTooBroadProviderFieldInjection() {
+        // when
+        underTest.instance(WildcardProviderFieldHolder.class);
+    }
+
+    @Case(19)
+    @Test(expected = AmbiguousTargetException.class)
+    public void shouldErrorOutOnTooBroadProviderInjectionByConstructor() {
+        // when
+        underTest.instance(WildcardProviderConstructorHolder.class);
     }
 }

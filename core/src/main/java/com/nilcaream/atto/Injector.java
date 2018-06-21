@@ -5,12 +5,15 @@ import com.nilcaream.atto.exception.ReflectionsNotFoundException;
 import com.nilcaream.atto.exception.TargetNotFoundException;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Qualifier;
 import javax.inject.Singleton;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,10 +48,21 @@ class Injector {
     }
 
     Descriptor describe(Field field) {
-        return describe(field, field.getType(), field.getAnnotations());
+        Class<?> type = field.getType();
+        if (Provider.class.isAssignableFrom(type)) {
+            return describe(field, parametrizedType(field, field.getGenericType()), field.getAnnotations());
+        } else {
+            return describe(field, type, field.getAnnotations());
+        }
     }
 
     Descriptor describe(Class<?> cls, Annotation[] annotations) {
+        return describe(cls, cls, annotations);
+    }
+
+
+    Descriptor describe(Object source, Type type, Annotation[] annotations) {
+        Class cls = parametrizedType(source, type);
         return describe(cls, cls, annotations);
     }
 
@@ -57,6 +71,20 @@ class Injector {
         Descriptor result = new Descriptor(cls, qualifier);
         logger.debug("%s for %s of type %s", result, source, cls.getName());
         return result;
+    }
+
+    private Class parametrizedType(Object source, Type type) {
+        if (type != null && ParameterizedType.class.isAssignableFrom(type.getClass())) {
+            ParameterizedType parameterizedType = ParameterizedType.class.cast(type);
+            Type[] typeArguments = parameterizedType.getActualTypeArguments();
+            if (typeArguments != null && typeArguments.length == 1 && Class.class.isAssignableFrom(typeArguments[0].getClass())) {
+                return Class.class.cast(typeArguments[0]);
+            } else {
+                throw new AmbiguousTargetException("Cannot determine generic parameters of " + type + " for " + source);
+            }
+        } else {
+            throw new AmbiguousTargetException("Cannot determine generic parameters of " + type + " for " + source);
+        }
     }
 
     private Annotation getQualifier(Class<?> cls, Annotation[] annotations) {
@@ -83,7 +111,7 @@ class Injector {
                     field.setAccessible(true);
                     if (field.get(instance) == null) {
                         results.add(field);
-                        logger.debug("Field %s is null", field);
+                        logger.debug("Field %s is null", field.getGenericType());
                     }
                 }
             }
@@ -125,7 +153,7 @@ class Injector {
             logger.debug("Constructor %s for %s (source %s)", constructor, targetDescriptor, descriptor);
             return constructor;
         } else {
-            logger.error("Matching types for %s: %s", descriptor, descriptors);
+            logger.error("Matching sub types for %s: %s", descriptor, descriptors);
             throw new AmbiguousTargetException("Too many matching sub types for " + descriptor);
         }
     }

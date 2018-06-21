@@ -3,7 +3,6 @@ package com.nilcaream.atto;
 import lombok.NonNull;
 import lombok.Value;
 
-import javax.inject.Named;
 import java.lang.annotation.Annotation;
 
 @Value
@@ -21,7 +20,7 @@ class Descriptor {
 
         @Override
         public Class<? extends Annotation> annotationType() {
-            return Named.class;
+            return Default.class;
         }
 
         @Override

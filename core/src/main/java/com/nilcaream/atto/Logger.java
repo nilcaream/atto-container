@@ -8,13 +8,7 @@ import java.util.logging.LogManager;
 public interface Logger extends BiConsumer<Logger.Level, String> {
 
     enum Level {
-        ALL(0), DEBUG(1), INFO(2), WARNING(3), ERROR(4), OFF(5);
-
-        int id;
-
-        Level(int id) {
-            this.id = id;
-        }
+        ALL, DEBUG, INFO, WARNING, ERROR, OFF
     }
 
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm:ss.SSS");
@@ -54,7 +48,7 @@ public interface Logger extends BiConsumer<Logger.Level, String> {
 
     static Logger standardOutputLogger(Level min) {
         return (level, message) -> {
-            if (level.id >= min.id && level != Level.OFF) {
+            if (level.compareTo(min) >= 0 && level != Level.OFF) {
                 System.out.printf("%-23s %8s %s\n", LocalDateTime.now().format(formatter), level, message);
             }
         };

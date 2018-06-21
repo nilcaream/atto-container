@@ -2,6 +2,8 @@ package com.nilcaream.atto;
 
 import com.nilcaream.atto.exception.AttoException;
 
+import javax.inject.Provider;
+import javax.inject.Singleton;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -10,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@Singleton
 public class Atto {
 
     private LoggerWrapper logger = new LoggerWrapper();
@@ -17,10 +20,15 @@ public class Atto {
     private Map<Descriptor, Object> singletons = new HashMap<>();
 
     private Injector injector;
+    private Descriptor attoDescriptor;
 
     public synchronized <T> T instance(Class<T> cls) {
+        return instance(cls, injector.describe(cls));
+    }
+
+    private synchronized <T> T instance(Class<T> cls, Descriptor descriptor) {
         try {
-            return cls.cast(instance(injector.describe(cls), new AtomicInteger(0)));
+            return cls.cast(instance(descriptor, new AtomicInteger(0)));
         } catch (IllegalAccessException | InvocationTargetException | InstantiationException | IllegalArgumentException e) {
             logger.error(e.toString());
             throw new AttoException("Cannot create instance of " + cls.getName(), e);
@@ -33,6 +41,8 @@ public class Atto {
     private Object instance(Descriptor sourceDescriptor, AtomicInteger depth) throws IllegalAccessException, InvocationTargetException, InstantiationException {
         if (depth.incrementAndGet() >= maxDepth) {
             throw new AttoException("Nested injection depth exceeded: " + depth.intValue());
+        } else if (sourceDescriptor.equals(attoDescriptor)) {
+            return this;
         }
 
         Object instance;
@@ -66,7 +76,12 @@ public class Atto {
             for (int i = 0, length = parameterTypes.length; i < length; i++) {
                 Class cls = parameterTypes[i];
                 Annotation[] annotations = constructor.getParameterAnnotations()[i];
-                parameters[i] = instance(injector.describe(cls, annotations), depth);
+                if (Provider.class.isAssignableFrom(cls)) {
+                    Descriptor descriptor = injector.describe(constructor, constructor.getGenericParameterTypes()[i], annotations);
+                    parameters[i] = (Provider) () -> instance(descriptor.getCls(), descriptor);
+                } else {
+                    parameters[i] = instance(injector.describe(cls, annotations), depth);
+                }
             }
             return constructor.newInstance(parameters);
         }
@@ -74,7 +89,12 @@ public class Atto {
 
     private void processFields(Object instance, AtomicInteger depth) throws IllegalAccessException, InvocationTargetException, InstantiationException {
         for (Field field : injector.getNullFields(instance)) {
-            field.set(instance, instance(injector.describe(field), depth));
+            Descriptor descriptor = injector.describe(field);
+            if (Provider.class.isAssignableFrom(field.getType())) {
+                field.set(instance, (Provider) () -> instance(descriptor.getCls(), descriptor));
+            } else {
+                field.set(instance, instance(descriptor, depth));
+            }
         }
     }
 
@@ -93,6 +113,9 @@ public class Atto {
         if (loggerClass != null) {
             logger.setImplementation(instance(loggerClass));
         }
+
+        attoDescriptor = injector.describe(Atto.class);
+        singletons.put(attoDescriptor, this);
     }
 
     private static final class LoggerWrapper implements Logger {
