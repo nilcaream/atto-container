@@ -7,9 +7,9 @@ import javax.inject.Provider;
 @Getter
 public class ProviderConstructorHolder {
 
-    private final Provider<ProvidedSingleton> singletonProvider;
+    private final Provider<ProvidedSingleton> provider;
 
-    public ProviderConstructorHolder(Provider<ProvidedSingleton> singletonProvider) {
-        this.singletonProvider = singletonProvider;
+    public ProviderConstructorHolder(Provider<ProvidedSingleton> provider) {
+        this.provider = provider;
     }
 }

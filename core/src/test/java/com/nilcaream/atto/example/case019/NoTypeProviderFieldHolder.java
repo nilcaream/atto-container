@@ -6,7 +6,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 @Getter
-public class UnknownProviderFieldHolder {
+public class NoTypeProviderFieldHolder {
 
     @Inject
     private Provider provider;

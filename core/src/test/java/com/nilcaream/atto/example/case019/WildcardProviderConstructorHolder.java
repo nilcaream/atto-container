@@ -9,7 +9,7 @@ public class WildcardProviderConstructorHolder {
 
     private final Provider<?> provider;
 
-    public WildcardProviderConstructorHolder(Provider<?> singletonProvider) {
-        this.provider = singletonProvider;
+    public WildcardProviderConstructorHolder(Provider<?> provider) {
+        this.provider = provider;
     }
 }

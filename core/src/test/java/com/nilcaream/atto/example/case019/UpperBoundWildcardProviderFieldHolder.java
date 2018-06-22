@@ -6,8 +6,8 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 
 @Getter
-public class ProviderFieldHolder {
+public class UpperBoundWildcardProviderFieldHolder {
 
     @Inject
-    private Provider<ProvidedSingleton> provider;
+    private Provider<? extends ProvidedSingleton> provider;
 }

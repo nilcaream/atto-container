@@ -33,10 +33,16 @@ import com.nilcaream.atto.example.case018.DifferentNamedValuesHolder;
 import com.nilcaream.atto.example.case018.ImplementationA;
 import com.nilcaream.atto.example.case018.ImplementationB;
 import com.nilcaream.atto.example.case018.NamedValuesMismatchHolder;
+import com.nilcaream.atto.example.case019.NoTypeProviderConstructorHolder;
+import com.nilcaream.atto.example.case019.NoTypeProviderFieldHolder;
+import com.nilcaream.atto.example.case019.ProvidedSingleton;
 import com.nilcaream.atto.example.case019.ProviderConstructorHolder;
 import com.nilcaream.atto.example.case019.ProviderFieldHolder;
-import com.nilcaream.atto.example.case019.UnknownProviderConstructorHolder;
-import com.nilcaream.atto.example.case019.UnknownProviderFieldHolder;
+import com.nilcaream.atto.example.case019.SpecificProvidedSingleton;
+import com.nilcaream.atto.example.case019.SpecificUpperBoundWildcardProviderConstructorHolder;
+import com.nilcaream.atto.example.case019.SpecificUpperBoundWildcardProviderFieldHolder;
+import com.nilcaream.atto.example.case019.UpperBoundWildcardProviderConstructorHolder;
+import com.nilcaream.atto.example.case019.UpperBoundWildcardProviderFieldHolder;
 import com.nilcaream.atto.example.case019.WildcardProviderConstructorHolder;
 import com.nilcaream.atto.example.case019.WildcardProviderFieldHolder;
 import com.nilcaream.atto.exception.AmbiguousTargetException;
@@ -428,8 +434,10 @@ public class AttoTest {
 
         // then
         assertNotNull(instance);
-        assertNotNull(instance.getSingletonProvider().get());
-        assertSame(instance.getSingletonProvider().get(), instance.getSingletonProvider().get());
+        assertNotNull(instance.getProvider());
+        assertNotNull(instance.getProvider().get());
+        assertEquals(ProvidedSingleton.class, instance.getProvider().get().getClass());
+        assertSame(instance.getProvider().get(), instance.getProvider().get());
     }
 
     @Case(19)
@@ -440,36 +448,115 @@ public class AttoTest {
 
         // then
         assertNotNull(instance);
-        assertNotNull(instance.getSingletonProvider().get());
-        assertSame(instance.getSingletonProvider().get(), instance.getSingletonProvider().get());
+        assertNotNull(instance.getProvider());
+        assertNotNull(instance.getProvider().get());
+        assertEquals(ProvidedSingleton.class, instance.getProvider().get().getClass());
+        assertSame(instance.getProvider().get(), instance.getProvider().get());
     }
 
     @Case(19)
     @Test(expected = AmbiguousTargetException.class)
-    public void shouldErrorOutOnUnspecifiedProviderFieldInjection() {
+    public void shouldErrorOutOnNoTypeProviderFieldInjection() {
         // when
-        underTest.instance(UnknownProviderFieldHolder.class);
+        underTest.instance(NoTypeProviderFieldHolder.class);
     }
 
     @Case(19)
     @Test(expected = AmbiguousTargetException.class)
-    public void shouldErrorOutOnUnspecifiedProviderInjectionByConstructor() {
+    public void shouldErrorOutOnNoTypeProviderInjectionByConstructor() {
         // when
-        underTest.instance(UnknownProviderConstructorHolder.class);
+        underTest.instance(NoTypeProviderConstructorHolder.class);
     }
 
     @Case(19)
-    @Test(expected = AmbiguousTargetException.class)
-    public void shouldErrorOutOnTooBroadProviderFieldInjection() {
+    @Test
+    public void shouldInjectWildcardProviderByField() {
         // when
-        underTest.instance(WildcardProviderFieldHolder.class);
+        WildcardProviderFieldHolder instance = underTest.instance(WildcardProviderFieldHolder.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getProvider());
+        assertNotNull(instance.getProvider().get());
+        assertEquals(Object.class, instance.getProvider().get().getClass());
+        assertNotSame(instance.getProvider().get(), instance.getProvider().get());
     }
 
     @Case(19)
-    @Test(expected = AmbiguousTargetException.class)
-    public void shouldErrorOutOnTooBroadProviderInjectionByConstructor() {
+    @Test
+    public void shouldInjectWildcardProviderByConstructor() {
         // when
-        underTest.instance(WildcardProviderConstructorHolder.class);
+        WildcardProviderConstructorHolder instance = underTest.instance(WildcardProviderConstructorHolder.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getProvider());
+        assertNotNull(instance.getProvider().get());
+        assertEquals(Object.class, instance.getProvider().get().getClass());
+        assertNotSame(instance.getProvider().get(), instance.getProvider().get());
+    }
+
+    @Case(19)
+    @Test
+    public void shouldInjectUpperBoundWildcardProviderByField() {
+        // when
+        UpperBoundWildcardProviderFieldHolder instance = underTest.instance(UpperBoundWildcardProviderFieldHolder.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getProvider());
+        assertNotNull(instance.getProvider().get());
+        assertEquals(ProvidedSingleton.class, instance.getProvider().get().getClass());
+        assertSame(instance.getProvider().get(), instance.getProvider().get());
+    }
+
+    @Case(19)
+    @Test
+    public void shouldInjectUpperBoundWildcardProviderByConstructor() {
+        // when
+        UpperBoundWildcardProviderConstructorHolder instance = underTest.instance(UpperBoundWildcardProviderConstructorHolder.class);
+
+        // then
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getProvider());
+        assertNotNull(instance.getProvider().get());
+        assertEquals(ProvidedSingleton.class, instance.getProvider().get().getClass());
+        assertSame(instance.getProvider().get(), instance.getProvider().get());
+    }
+
+    @Case(19)
+    @Test
+    public void shouldInjectSpecificUpperBoundWildcardProviderByField() {
+        // given
+        underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerInstance(standardOutputLogger(ALL)).build();
+
+        // when
+        SpecificUpperBoundWildcardProviderFieldHolder instance = underTest.instance(SpecificUpperBoundWildcardProviderFieldHolder.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getProvider());
+        assertNotNull(instance.getProvider().get());
+        assertEquals(SpecificProvidedSingleton.class, instance.getProvider().get().getClass());
+        assertSame(instance.getProvider().get(), instance.getProvider().get());
+    }
+
+    @Case(19)
+    @Test
+    public void shouldInjectSpecificUpperBoundWildcardProviderByConstructor() {
+        // given
+        underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerInstance(standardOutputLogger(ALL)).build();
+
+        // when
+        SpecificUpperBoundWildcardProviderConstructorHolder instance = underTest.instance(SpecificUpperBoundWildcardProviderConstructorHolder.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getProvider());
+        assertNotNull(instance.getProvider().get());
+        assertEquals(SpecificProvidedSingleton.class, instance.getProvider().get().getClass());
+        assertSame(instance.getProvider().get(), instance.getProvider().get());
     }
 
     @Test(expected = ReflectionsNotFoundException.class)

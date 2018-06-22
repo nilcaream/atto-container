@@ -14,9 +14,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.nilcaream.atto.Descriptor.DEFAULT_QUALIFIER;
@@ -74,14 +76,26 @@ class Injector {
     }
 
     private Class parametrizedType(Object source, Type type) {
+        Class result = null;
+
         if (type != null && ParameterizedType.class.isAssignableFrom(type.getClass())) {
-            ParameterizedType parameterizedType = ParameterizedType.class.cast(type);
-            Type[] typeArguments = parameterizedType.getActualTypeArguments();
-            if (typeArguments != null && typeArguments.length == 1 && Class.class.isAssignableFrom(typeArguments[0].getClass())) {
-                return Class.class.cast(typeArguments[0]);
-            } else {
-                throw new AmbiguousTargetException("Cannot determine generic parameters of " + type + " for " + source);
+            Type typeArgument = getFirst(source, type, ParameterizedType.class.cast(type).getActualTypeArguments());
+            if (Class.class.isAssignableFrom(typeArgument.getClass())) {
+                result = Class.class.cast(typeArgument);
+            } else if (WildcardType.class.isAssignableFrom(typeArgument.getClass())) {
+                Type upperBound = getFirst(source, type, WildcardType.class.cast(typeArgument).getUpperBounds());
+                if (Class.class.isAssignableFrom(upperBound.getClass())) {
+                    result = Class.class.cast(upperBound);
+                }
             }
+        }
+
+        return Optional.ofNullable(result).orElseThrow(() -> new AmbiguousTargetException("Cannot determine generic parameters of " + type + " for " + source));
+    }
+
+    private <T> T getFirst(Object source, Type type, T[] elements) {
+        if (elements != null && elements.length == 1) {
+            return elements[0];
         } else {
             throw new AmbiguousTargetException("Cannot determine generic parameters of " + type + " for " + source);
         }

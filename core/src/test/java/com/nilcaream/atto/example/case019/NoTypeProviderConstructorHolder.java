@@ -5,11 +5,11 @@ import lombok.Getter;
 import javax.inject.Provider;
 
 @Getter
-public class UnknownProviderConstructorHolder {
+public class NoTypeProviderConstructorHolder {
 
     private final Provider provider;
 
-    public UnknownProviderConstructorHolder(Provider singletonProvider) {
+    public NoTypeProviderConstructorHolder(Provider singletonProvider) {
         this.provider = singletonProvider;
     }
 }
