@@ -23,7 +23,7 @@ import static com.nilcaream.atto.Descriptor.DEFAULT_QUALIFIER;
 
 class Injector {
 
-    private Scanner scanner;
+    private final Scanner scanner;
 
     private Logger logger = Logger.nullLogger();
 
@@ -98,7 +98,7 @@ class Injector {
             return qualifiers.get(0);
         } else {
             logger.error("Qualifiers for %s: %s", cls.getName(), qualifiers);
-            throw new AmbiguousTargetException("Too many Qualifier annotations for " + cls.getName() + " - " + qualifiers);
+            throw new AmbiguousTargetException("Too many qualifiers for " + cls.getName() + " - " + qualifiers);
         }
     }
 

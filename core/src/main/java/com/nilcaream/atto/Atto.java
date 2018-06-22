@@ -16,11 +16,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Atto {
 
     private int maxDepth = 32;
-    private LoggerWrapper logger = new LoggerWrapper();
-    private Map<Descriptor, Object> singletons = new HashMap<>();
+    private final LoggerWrapper logger = new LoggerWrapper();
+    private final Map<Descriptor, Object> singletons = new HashMap<>();
 
-    private Injector injector;
-    private Descriptor attoDescriptor;
+    private final Injector injector;
+    private final Descriptor attoDescriptor;
 
     public synchronized <T> T instance(Class<T> cls) {
         return instance(cls, injector.describe(cls));

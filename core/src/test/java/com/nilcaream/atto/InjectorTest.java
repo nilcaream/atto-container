@@ -21,7 +21,7 @@ import java.lang.reflect.Field;
 import static com.nilcaream.atto.Descriptor.DEFAULT_QUALIFIER;
 import static com.nilcaream.atto.Logger.Level.ALL;
 import static com.nilcaream.atto.Logger.standardOutputLogger;
-import static com.nilcaream.atto.ScannerUtil.runOnReflectionsDisabled;
+import static com.nilcaream.atto.ScannerUtil.runWithReflectionsDisabled;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
@@ -126,9 +126,15 @@ public class InjectorTest {
         new Descriptor(getClass(), null);
     }
 
+    @Test
+    public void shouldReturnClassForDefaultQualifierAnnotationType() {
+        // then
+        assertSame(DEFAULT_QUALIFIER.getClass(), DEFAULT_QUALIFIER.annotationType());
+    }
+
     @Test(expected = ReflectionsNotFoundException.class)
     public void shouldBeUnavailableForMissingReflections() {
-        runOnReflectionsDisabled(() -> {
+        runWithReflectionsDisabled(() -> {
             // when
             Injector.builder().logger(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto").build();
         });

@@ -1,16 +1,17 @@
 package com.nilcaream.atto;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.nilcaream.atto.exception.ReflectionsNotFoundException;
 import org.reflections.Reflections;
 
 import java.util.Set;
 
+import static com.nilcaream.atto.Logger.nullLogger;
+
 class Scanner {
 
-    // visible for testing only
+    @VisibleForTesting
     static String reflectionsCheckClass = "org.reflections.Reflections";
-
-    private Logger logger = Logger.nullLogger();
 
     private Reflections reflections;
 
@@ -18,17 +19,16 @@ class Scanner {
 
     @lombok.Builder(builderClassName = "Builder")
     private Scanner(String scanPackage, Logger logger) {
-        if (logger != null) {
-            this.logger = logger;
-        }
+        Logger log = logger == null ? nullLogger() : logger;
+
         if (scanPackage != null) {
             try {
                 Class.forName(reflectionsCheckClass);
                 reflections = new Reflections(scanPackage);
                 available = true;
-                this.logger.debug("Classpath scanning enabled for package " + scanPackage);
+                log.debug("Classpath scanning enabled for package " + scanPackage);
             } catch (ClassNotFoundException ignore) {
-                this.logger.warning("Classpath scanning not available for package " + scanPackage);
+                log.warning("Classpath scanning not available for package " + scanPackage);
             }
         }
     }

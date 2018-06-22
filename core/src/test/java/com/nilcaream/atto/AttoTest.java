@@ -50,7 +50,7 @@ import java.util.stream.Stream;
 import static com.nilcaream.atto.Logger.Level.ALL;
 import static com.nilcaream.atto.Logger.javaUtilLogger;
 import static com.nilcaream.atto.Logger.standardOutputLogger;
-import static com.nilcaream.atto.ScannerUtil.runOnReflectionsDisabled;
+import static com.nilcaream.atto.ScannerUtil.runWithReflectionsDisabled;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
@@ -474,7 +474,7 @@ public class AttoTest {
 
     @Test(expected = ReflectionsNotFoundException.class)
     public void shouldBeUnavailableForMissingReflections() {
-        runOnReflectionsDisabled(() -> {
+        runWithReflectionsDisabled(() -> {
             // when
             Atto.builder().loggerInstance(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto").build();
         });
