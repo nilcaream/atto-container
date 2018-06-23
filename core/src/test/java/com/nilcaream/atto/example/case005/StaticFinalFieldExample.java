@@ -5,6 +5,5 @@ import javax.inject.Inject;
 public class StaticFinalFieldExample {
 
     @Inject
-    private static final StaticFinalFieldPrototype finalBlack = null;
-
+    private static final StaticFieldPrototype prototype = null;
 }

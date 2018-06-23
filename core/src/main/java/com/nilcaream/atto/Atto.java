@@ -10,6 +10,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Singleton
@@ -22,19 +23,30 @@ public class Atto {
     private final Injector injector;
     private final Descriptor attoDescriptor;
 
+    public synchronized void inject(Class cls) {
+        handleExceptions(cls, () -> {
+            processFields(cls, null, new AtomicInteger(0));
+            return null;
+        });
+    }
+
     public synchronized <T> T instance(Class<T> cls) {
         return instance(cls, injector.describe(cls));
     }
 
     private synchronized <T> T instance(Class<T> cls, Descriptor descriptor) {
+        return handleExceptions(cls, () -> cls.cast(instance(descriptor, new AtomicInteger(0))));
+    }
+
+    private <T> T handleExceptions(Class source, Callable<T> callable) {
         try {
-            return cls.cast(instance(descriptor, new AtomicInteger(0)));
-        } catch (IllegalAccessException | InvocationTargetException | InstantiationException | IllegalArgumentException e) {
-            logger.error(e.toString());
-            throw new AttoException("Cannot create instance of " + cls.getName(), e);
+            return callable.call();
         } catch (AttoException e) {
             logger.error(e.toString());
             throw e;
+        } catch (Exception e) {
+            logger.error(e.toString());
+            throw new AttoException("Cannot process " + source.getName(), e);
         }
     }
 
@@ -55,14 +67,14 @@ public class Atto {
                 instance = instance(constructor, depth);
                 logger.info("Created singleton " + targetDescriptor);
                 singletons.put(targetDescriptor, instance);
-                processFields(instance, depth);
+                processFields(targetDescriptor.getCls(), instance, depth);
             } else {
                 logger.info("Returned singleton " + targetDescriptor);
             }
         } else {
             instance = instance(constructor, depth);
             logger.info("Created prototype " + targetDescriptor);
-            processFields(instance, depth);
+            processFields(targetDescriptor.getCls(), instance, depth);
         }
         return instance;
     }
@@ -87,8 +99,8 @@ public class Atto {
         }
     }
 
-    private void processFields(Object instance, AtomicInteger depth) throws IllegalAccessException, InvocationTargetException, InstantiationException {
-        for (Field field : injector.getNullFields(instance)) {
+    private void processFields(Class cls, Object instance, AtomicInteger depth) throws IllegalAccessException, InvocationTargetException, InstantiationException {
+        for (Field field : injector.getNullFields(cls, instance)) {
             Descriptor descriptor = injector.describe(field);
             if (Provider.class.isAssignableFrom(field.getType())) {
                 field.set(instance, (Provider) () -> instance(descriptor.getCls(), descriptor));

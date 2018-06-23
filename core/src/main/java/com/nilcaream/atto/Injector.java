@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.nilcaream.atto.Descriptor.DEFAULT_QUALIFIER;
+import static java.lang.reflect.Modifier.isStatic;
 
 class Injector {
 
@@ -83,6 +84,7 @@ class Injector {
             if (Class.class.isAssignableFrom(typeArgument.getClass())) {
                 result = Class.class.cast(typeArgument);
             } else if (WildcardType.class.isAssignableFrom(typeArgument.getClass())) {
+                // TODO what about lower bound or multiple bounds?
                 Type upperBound = getFirst(source, type, WildcardType.class.cast(typeArgument).getUpperBounds());
                 if (Class.class.isAssignableFrom(upperBound.getClass())) {
                     result = Class.class.cast(upperBound);
@@ -116,14 +118,14 @@ class Injector {
         }
     }
 
-    List<Field> getNullFields(Object instance) throws IllegalAccessException {
-        Class<?> currentCls = instance.getClass();
-        List<Field> results = new ArrayList<>(20);
+    List<Field> getNullFields(Class cls, Object instance) throws IllegalAccessException {
+        Class<?> currentCls = cls;
+        List<Field> results = new ArrayList<>(16);
         while (currentCls != null) {
             for (Field field : currentCls.getDeclaredFields()) {
                 if (field.isAnnotationPresent(Inject.class)) {
                     field.setAccessible(true);
-                    if (field.get(instance) == null) {
+                    if ((isStatic(field.getModifiers()) && field.get(instance) == null) || (!isStatic(field.getModifiers()) && instance != null && field.get(instance) == null)) {
                         results.add(field);
                         logger.debug("Field %s is null", field.getGenericType());
                     }

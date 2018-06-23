@@ -1,4 +1,4 @@
 package com.nilcaream.atto.example.case005;
 
-public class StaticFinalFieldPrototype {
+public class StaticFieldPrototype {
 }

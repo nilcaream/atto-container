@@ -10,6 +10,8 @@ import com.nilcaream.atto.example.case004.AnotherOrange;
 import com.nilcaream.atto.example.case004.AnotherWhite;
 import com.nilcaream.atto.example.case004.ConstructorInjection;
 import com.nilcaream.atto.example.case004.ConstructorInjectionSimple;
+import com.nilcaream.atto.example.case005.StaticFieldExample;
+import com.nilcaream.atto.example.case005.StaticFieldPrototype;
 import com.nilcaream.atto.example.case005.StaticFinalFieldExample;
 import com.nilcaream.atto.example.case006.SingletonImplementation;
 import com.nilcaream.atto.example.case007.CyclicDependencies1;
@@ -181,6 +183,32 @@ public class AttoTest {
     public void shouldErrorOutStaticFinalFieldInjection() {
         // when
         underTest.instance(StaticFinalFieldExample.class);
+    }
+
+    @Case(5)
+    @Test
+    public void shouldInjectStaticAndInstanceFields() {
+        // when
+        StaticFieldExample.setStaticPrototype(null);
+        StaticFieldExample instance = underTest.instance(StaticFieldExample.class);
+
+        // then
+        assertNotNull(instance);
+        assertNotNull(instance.getPrototype());
+        assertNotNull(StaticFieldExample.getStaticPrototype());
+        assertNotSame(instance.getPrototype(), StaticFieldExample.getStaticPrototype());
+    }
+
+    @Case(5)
+    @Test
+    public void shouldInjectStaticFieldForClass() {
+        // when
+        StaticFieldExample.setStaticPrototype(null);
+        underTest.inject(StaticFieldExample.class);
+
+        // then
+        assertNotNull(StaticFieldExample.getStaticPrototype());
+        assertEquals(StaticFieldPrototype.class, StaticFieldExample.getStaticPrototype().getClass());
     }
 
     @Case(6)
