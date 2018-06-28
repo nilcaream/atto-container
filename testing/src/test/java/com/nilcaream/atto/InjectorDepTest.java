@@ -1,16 +1,21 @@
 package com.nilcaream.atto;
 
 import com.nilcaream.atto.exception.ReflectionsNotFoundException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static com.nilcaream.atto.Logger.Level.ALL;
 import static com.nilcaream.atto.Logger.standardOutputLogger;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
-public class InjectorDepTest {
+class InjectorDepTest {
 
-    @Test(expected = ReflectionsNotFoundException.class)
-    public void shouldBeUnavailableForMissingReflections() {
+    @Test
+    void shouldBeUnavailableForMissingReflections() {
         // when
-        Injector.builder().logger(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto").build();
+        Throwable throwable = catchThrowable(() -> Injector.builder().logger(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto").build());
+
+        // then
+        assertThat(throwable).isExactlyInstanceOf(ReflectionsNotFoundException.class);
     }
 }

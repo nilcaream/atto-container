@@ -6,54 +6,54 @@ import com.nilcaream.atto.example.case003.ExampleImplementationClone2;
 import com.nilcaream.atto.example.case003.ExampleImplementationGreen;
 import com.nilcaream.atto.example.case003.ExampleInterface;
 import com.nilcaream.atto.exception.ReflectionsNotFoundException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
 import static com.nilcaream.atto.Logger.Level.ALL;
 import static com.nilcaream.atto.Logger.standardOutputLogger;
 import static com.nilcaream.atto.ScannerUtil.runWithReflectionsDisabled;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
-public class ScannerTest {
+class ScannerTest {
 
     private Scanner underTest = Scanner.builder().logger(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto").build();
 
-    @Test(expected = ReflectionsNotFoundException.class)
-    public void shouldErrorOutOnMissingPackageOnInitialization() {
+    @Test
+    void shouldErrorOutOnMissingPackageOnInitialization() {
         // given
         underTest = Scanner.builder().logger(standardOutputLogger(ALL)).build();
 
         // when
-        assertFalse(underTest.isAvailable());
-        underTest.subTypes(ExampleInterface.class);
+        assertThat(underTest.isAvailable()).isFalse();
+        Throwable throwable = catchThrowable(() -> underTest.subTypes(ExampleInterface.class));
+
+        // then
+        assertThat(throwable).isExactlyInstanceOf(ReflectionsNotFoundException.class);
+
     }
 
     @Test
-    public void shouldFindTestSubTypes() {
+    void shouldFindTestSubTypes() {
         // when
         Set<Class<? extends ExampleInterface>> implementations = underTest.subTypes(ExampleInterface.class);
 
         // then
-        assertNotNull(implementations);
-        assertEquals(4, implementations.size());
-        assertTrue(implementations.contains(ExampleImplementationBlue.class));
-        assertTrue(implementations.contains(ExampleImplementationGreen.class));
-        assertTrue(implementations.contains(ExampleImplementationClone1.class));
-        assertTrue(implementations.contains(ExampleImplementationClone2.class));
+        assertThat(implementations)
+                .isNotNull()
+                .hasSize(4)
+                .contains(ExampleImplementationBlue.class, ExampleImplementationGreen.class, ExampleImplementationClone1.class, ExampleImplementationClone2.class);
     }
 
     @Test
-    public void shouldBeUnavailableForMissingReflections() {
+    void shouldBeUnavailableForMissingReflections() {
         runWithReflectionsDisabled(() -> {
             // when
             Scanner underTest = Scanner.builder().logger(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto").build();
 
             // then
-            assertFalse(underTest.isAvailable());
+            assertThat(underTest.isAvailable()).isFalse();
         });
     }
 }

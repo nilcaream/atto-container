@@ -51,7 +51,7 @@ import com.nilcaream.atto.exception.AmbiguousTargetException;
 import com.nilcaream.atto.exception.AttoException;
 import com.nilcaream.atto.exception.ReflectionsNotFoundException;
 import com.nilcaream.atto.exception.TargetNotFoundException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.stream.Stream;
 
@@ -59,52 +59,60 @@ import static com.nilcaream.atto.Logger.Level.ALL;
 import static com.nilcaream.atto.Logger.javaUtilLogger;
 import static com.nilcaream.atto.Logger.standardOutputLogger;
 import static com.nilcaream.atto.ScannerUtil.runWithReflectionsDisabled;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 
-public class AttoTest {
+class AttoTest {
 
     private Atto underTest = Atto.builder().loggerInstance(standardOutputLogger(ALL)).build();
 
     @Case(1)
-    @Test(expected = AmbiguousTargetException.class)
-    public void shouldErrorOutOnMultiplePublicConstructors() {
+    @Test
+    void shouldErrorOutOnMultiplePublicConstructors() {
         // when
-        underTest.instance(TwoPrivateConstructors.class);
+        Throwable throwable = catchThrowable(() -> {
+            underTest.instance(TwoPrivateConstructors.class);
+        });
+
+        // then
+        assertThat(throwable).isExactlyInstanceOf(AmbiguousTargetException.class);
     }
 
     @Case(1)
-    @Test(expected = TargetNotFoundException.class)
-    public void shouldErrorOutOnPrivateConstructor() {
+    @Test
+    void shouldErrorOutOnPrivateConstructor() {
         // when
-        underTest.instance(PrivateConstructor.class);
+        Throwable throwable = catchThrowable(() -> underTest.instance(PrivateConstructor.class));
+
+        // then
+        assertThat(throwable).isExactlyInstanceOf(TargetNotFoundException.class);
     }
 
     @Case(2)
     @Test
-    public void shouldInjectAttoSingleton() {
+    void shouldInjectAttoSingleton() {
         // when
         AttoHolder instance = underTest.instance(AttoHolder.class);
 
         // then
-        assertNotNull(instance);
-        assertNotNull(instance.getAtto());
-        assertSame(underTest, instance.getAtto());
-    }
-
-    @Case(3)
-    @Test(expected = ReflectionsNotFoundException.class)
-    public void shouldErrorOutForInterfaceInjectionWithoutScanner() {
-        // when
-        underTest.instance(MultipleImplementations.class);
+        assertThat(instance).isNotNull();
+        assertThat(instance.getAtto()).isNotNull();
+        assertThat(underTest).isSameAs(instance.getAtto());
     }
 
     @Case(3)
     @Test
-    public void shouldInjectMultipleImplementations() {
+    void shouldErrorOutForInterfaceInjectionWithoutScanner() {
+        // when
+        Throwable throwable = catchThrowable(() -> underTest.instance(MultipleImplementations.class));
+
+        // then
+        assertThat(throwable).isExactlyInstanceOf(ReflectionsNotFoundException.class);
+    }
+
+    @Case(3)
+    @Test
+    void shouldInjectMultipleImplementations() {
         // given
         underTest = Atto.builder().loggerInstance(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto.example").build();
 
@@ -114,34 +122,38 @@ public class AttoTest {
 
         // then
         Stream.of(instance1, instance2).forEach(instance -> {
-            assertNotNull(instance);
+            assertThat(instance).isNotNull();
 
-            assertNotNull(instance.getBlue1());
-            assertEquals(ExampleImplementationBlue.class, instance.getBlue1().getClass());
-            assertNotNull(instance.getBlue2());
-            assertEquals(ExampleImplementationBlue.class, instance.getBlue2().getClass());
+            assertThat(instance.getBlue1())
+                    .isNotNull()
+                    .isExactlyInstanceOf(ExampleImplementationBlue.class);
+            assertThat(instance.getBlue2())
+                    .isNotNull()
+                    .isExactlyInstanceOf(ExampleImplementationBlue.class)
+                    .isSameAs(instance.getBlue1());
 
-            assertSame(instance.getBlue1(), instance.getBlue2());
-
-            assertNotNull(instance.getGreen1());
-            assertEquals(ExampleImplementationGreen.class, instance.getGreen1().getClass());
-            assertNotNull(instance.getGreen2());
-            assertEquals(ExampleImplementationGreen.class, instance.getGreen2().getClass());
-
-            assertNotSame(instance.getGreen1(), instance.getGreen2());
+            assertThat(instance.getGreen1())
+                    .isNotNull()
+                    .isExactlyInstanceOf(ExampleImplementationGreen.class);
+            assertThat(instance.getGreen2())
+                    .isNotNull()
+                    .isExactlyInstanceOf(ExampleImplementationGreen.class)
+                    .isNotSameAs(instance.getGreen1());
         });
 
-        assertNotSame(instance1, instance2);
-        assertNotSame(instance1.getGreen1(), instance2.getGreen1());
-        assertNotSame(instance1.getGreen2(), instance2.getGreen2());
-        assertSame(instance1.getBlue1(), instance2.getBlue1());
-        assertSame(instance1.getBlue1(), instance2.getBlue2());
-        assertSame(instance1.getBlue2(), instance2.getBlue1());
+        assertThat(instance1).isNotSameAs(instance2);
+        assertThat(instance1.getGreen1()).isNotSameAs(instance2.getGreen1());
+        assertThat(instance1.getGreen2()).isNotSameAs(instance2.getGreen2());
+
+        assertThat(instance1.getBlue1())
+                .isSameAs(instance2.getBlue1())
+                .isSameAs(instance2.getBlue2())
+                .isSameAs(instance1.getBlue2());
     }
 
     @Case(4)
     @Test
-    public void shouldInjectByConstructorWithScanning() {
+    void shouldInjectByConstructorWithScanning() {
         // given
         underTest = Atto.builder().loggerInstance(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto.example").build();
 
@@ -149,169 +161,192 @@ public class AttoTest {
         ConstructorInjection instance = underTest.instance(ConstructorInjection.class);
 
         // then
-        assertNotNull(instance);
-        assertNotNull(instance.getWhite());
-        assertNotNull(instance.getOrange());
-        assertNotNull(instance.getAnotherPrototypeField());
-        assertNotNull(instance.getAnotherPrototypeFinal());
-
-        assertEquals(AnotherOrange.class, instance.getOrange().getClass());
-        assertEquals(AnotherWhite.class, instance.getWhite().getClass());
-        assertNotSame(instance.getAnotherPrototypeFinal(), instance.getAnotherPrototypeField());
+        assertThat(instance).isNotNull();
+        assertThat(instance.getWhite())
+                .isNotNull()
+                .isExactlyInstanceOf(AnotherWhite.class);
+        assertThat(instance.getOrange())
+                .isNotNull()
+                .isExactlyInstanceOf(AnotherOrange.class);
+        assertThat(instance.getAnotherPrototypeField()).isNotNull();
+        assertThat(instance.getAnotherPrototypeFinal())
+                .isNotNull()
+                .isNotSameAs(instance.getAnotherPrototypeField());
     }
 
     @Case(4)
     @Test
-    public void shouldInjectByConstructorWithoutScanning() {
+    void shouldInjectByConstructorWithoutScanning() {
         // when
         ConstructorInjectionSimple instance = underTest.instance(ConstructorInjectionSimple.class);
 
         // then
-        assertNotNull(instance);
-        assertNotNull(instance.getWhite());
-        assertNotNull(instance.getOrange());
-        assertNotNull(instance.getAnotherPrototypeField());
-        assertNotNull(instance.getAnotherPrototypeFinal());
-
-        assertEquals(AnotherOrange.class, instance.getOrange().getClass());
-        assertEquals(AnotherWhite.class, instance.getWhite().getClass());
-        assertNotSame(instance.getAnotherPrototypeFinal(), instance.getAnotherPrototypeField());
-    }
-
-    @Case(5)
-    @Test(expected = AttoException.class)
-    public void shouldErrorOutStaticFinalFieldInjection() {
-        // when
-        underTest.instance(StaticFinalFieldExample.class);
+        assertThat(instance).isNotNull();
+        assertThat(instance.getWhite())
+                .isNotNull()
+                .isExactlyInstanceOf(AnotherWhite.class);
+        assertThat(instance.getOrange())
+                .isNotNull()
+                .isExactlyInstanceOf(AnotherOrange.class);
+        assertThat(instance.getAnotherPrototypeField()).isNotNull();
+        assertThat(instance.getAnotherPrototypeFinal())
+                .isNotNull()
+                .isNotSameAs(instance.getAnotherPrototypeField());
     }
 
     @Case(5)
     @Test
-    public void shouldInjectStaticAndInstanceFields() {
+    void shouldErrorOutStaticFinalFieldInjection() {
+        // when
+        Throwable throwable = catchThrowable(() -> underTest.instance(StaticFinalFieldExample.class));
+
+        // then
+        assertThat(throwable).isExactlyInstanceOf(AttoException.class);
+    }
+
+    @Case(5)
+    @Test
+    void shouldInjectStaticAndInstanceFields() {
         // when
         StaticFieldExample.setStaticPrototype(null);
         StaticFieldExample instance = underTest.instance(StaticFieldExample.class);
 
         // then
-        assertNotNull(instance);
-        assertNotNull(instance.getPrototype());
-        assertNotNull(StaticFieldExample.getStaticPrototype());
-        assertNotSame(instance.getPrototype(), StaticFieldExample.getStaticPrototype());
+        assertThat(instance).isNotNull();
+        assertThat(instance.getPrototype()).isNotNull();
+        assertThat(StaticFieldExample.getStaticPrototype())
+                .isNotNull()
+                .isExactlyInstanceOf(StaticFieldPrototype.class)
+                .isNotSameAs(instance.getPrototype());
     }
 
     @Case(5)
     @Test
-    public void shouldInjectStaticFieldForClass() {
+    void shouldInjectStaticFieldForClass() {
         // when
         StaticFieldExample.setStaticPrototype(null);
         underTest.inject(StaticFieldExample.class);
 
         // then
-        assertNotNull(StaticFieldExample.getStaticPrototype());
-        assertEquals(StaticFieldPrototype.class, StaticFieldExample.getStaticPrototype().getClass());
+        assertThat(StaticFieldExample.getStaticPrototype())
+                .isNotNull()
+                .isExactlyInstanceOf(StaticFieldPrototype.class);
     }
 
     @Case(6)
-    @Test(expected = AttoException.class)
-    public void shouldErrorOutOnTooShallowInjection() {
+    @Test
+    void shouldErrorOutOnTooShallowInjection() {
         // given
         underTest = Atto.builder().loggerInstance(standardOutputLogger(ALL)).maxDepth(1).build();
 
         // when
-        underTest.instance(SingletonImplementation.class);
-    }
+        Throwable throwable = catchThrowable(() -> underTest.instance(SingletonImplementation.class));
 
-    @Case(7)
-    @Test(expected = AttoException.class)
-    public void shouldErrorOutCyclicPrototype() {
-        // when
-        underTest.instance(CyclicPrototype.class);
+        // then
+        assertThat(throwable).isExactlyInstanceOf(AttoException.class);
     }
 
     @Case(7)
     @Test
-    public void shouldSupportCyclicDependenciesFieldInjection1() {
+    void shouldErrorOutCyclicPrototype() {
+        // when
+        Throwable throwable = catchThrowable(() -> underTest.instance(CyclicPrototype.class));
+
+        // then
+        assertThat(throwable).isExactlyInstanceOf(AttoException.class);
+    }
+
+    @Case(7)
+    @Test
+    void shouldSupportCyclicDependenciesFieldInjection1() {
         // when
         CyclicDependencies1 instance = underTest.instance(CyclicDependencies1.class);
 
         // then
-        assertNotNull(instance);
+        assertThat(instance).isNotNull();
 
         // instance
-        assertNotNull(instance.getCyclicDependencies1());
-        assertNotNull(instance.getCyclicDependencies2());
-        assertNotNull(instance.getCyclicDependencies3());
+        assertThat(instance.getCyclicDependencies1()).isNotNull();
+        assertThat(instance.getCyclicDependencies2()).isNotNull();
+        assertThat(instance.getCyclicDependencies3()).isNotNull();
 
         // instance - 1
-        assertNotNull(instance.getCyclicDependencies1().getCyclicDependencies1());
-        assertNotNull(instance.getCyclicDependencies1().getCyclicDependencies2());
-        assertNotNull(instance.getCyclicDependencies1().getCyclicDependencies3());
+        assertThat(instance.getCyclicDependencies1().getCyclicDependencies1()).isNotNull();
+        assertThat(instance.getCyclicDependencies1().getCyclicDependencies2()).isNotNull();
+        assertThat(instance.getCyclicDependencies1().getCyclicDependencies3()).isNotNull();
 
-        assertSame(instance, instance.getCyclicDependencies1());
-        assertSame(instance.getCyclicDependencies1(), instance.getCyclicDependencies1().getCyclicDependencies1());
+        assertThat(instance).isSameAs(instance.getCyclicDependencies1());
+        assertThat(instance.getCyclicDependencies1()).isSameAs(instance.getCyclicDependencies1().getCyclicDependencies1());
 
         // instance - 2
-        assertNotNull(instance.getCyclicDependencies2().getCyclicDependencies1());
-        assertNotNull(instance.getCyclicDependencies2().getCyclicDependencies3());
-        assertSame(instance, instance.getCyclicDependencies2().getCyclicDependencies1());
+        assertThat(instance.getCyclicDependencies2().getCyclicDependencies1()).isNotNull();
+        assertThat(instance.getCyclicDependencies2().getCyclicDependencies3()).isNotNull();
+        assertThat(instance).isSameAs(instance.getCyclicDependencies2().getCyclicDependencies1());
 
         // instance - 3
-        assertNotNull(instance.getCyclicDependencies3().getCyclicDependencies1());
-        assertNotNull(instance.getCyclicDependencies3().getCyclicDependencies2());
-        assertNotNull(instance.getCyclicDependencies3().getCyclicDependencies3());
-        assertSame(instance.getCyclicDependencies1().getCyclicDependencies3(), instance.getCyclicDependencies3());
-        assertSame(instance.getCyclicDependencies2().getCyclicDependencies3(), instance.getCyclicDependencies3());
-        assertSame(instance.getCyclicDependencies3(), instance.getCyclicDependencies3().getCyclicDependencies3());
+        assertThat(instance.getCyclicDependencies3().getCyclicDependencies1()).isNotNull();
+        assertThat(instance.getCyclicDependencies3().getCyclicDependencies2()).isNotNull();
+        assertThat(instance.getCyclicDependencies3().getCyclicDependencies3()).isNotNull();
+        assertThat(instance.getCyclicDependencies1().getCyclicDependencies3())
+                .isSameAs(instance.getCyclicDependencies3())
+                .isSameAs(instance.getCyclicDependencies2().getCyclicDependencies3())
+                .isSameAs(instance.getCyclicDependencies3().getCyclicDependencies3());
     }
 
     @Case(8)
     @Test
-    public void shouldInjectFieldsOfSuperClass() {
+    void shouldInjectFieldsOfSuperClass() {
         // when
         SomeImplementation instance = underTest.instance(SomeImplementation.class);
 
         // then
-        assertNotNull(instance);
-        assertNotNull(instance.getSomePrototypeSub());
-        assertNotNull(instance.getSomeSingletonSub());
-        assertNotNull(instance.getSomePrototypeSuper());
+        assertThat(instance).isNotNull();
+        assertThat(instance.getSomePrototypeSub()).isNotNull();
+        assertThat(instance.getSomeSingletonSub()).isNotNull();
+        assertThat(instance.getSomePrototypeSuper()).isNotNull();
 
-        assertNotSame(instance.getSomePrototypeSub(), instance.getSomePrototypeSuper());
+        assertThat(instance.getSomePrototypeSub()).isNotSameAs(instance.getSomePrototypeSuper());
     }
 
     @Case(9)
     @Test
-    public void shouldInjectFieldsWithSameName() {
+    void shouldInjectFieldsWithSameName() {
         // when
         SameFieldNameSub instance = underTest.instance(SameFieldNameSub.class);
 
         // then
-        assertNotNull(instance);
-        assertNotNull(instance.getTheName());
-        assertNotNull(instance.getTheNameSub());
-        assertNotSame(instance.getTheNameSub(), instance.getTheName());
+        assertThat(instance).isNotNull();
+        assertThat(instance.getTheName()).isNotNull();
+        assertThat(instance.getTheNameSub()).isNotNull();
+        assertThat(instance.getTheNameSub()).isNotSameAs(instance.getTheName());
     }
 
     @Case(10)
-    @Test(expected = TargetNotFoundException.class)
-    public void shouldErrorOutOnInjectingQualifiedBeanToDefaultField() {
+    @Test
+    void shouldErrorOutOnInjectingQualifiedBeanToDefaultField() {
         // when
-        underTest.instance(UnambiguousHolder.class);
+        Throwable throwable = catchThrowable(() -> underTest.instance(UnambiguousHolder.class));
+
+        // then
+        assertThat(throwable).isExactlyInstanceOf(TargetNotFoundException.class);
     }
 
     @Case(10)
-    @Test(expected = TargetNotFoundException.class)
-    public void shouldErrorOutOnInjectingQualifiedBeanToDefaultFieldByInterface() {
+    @Test
+    void shouldErrorOutOnInjectingQualifiedBeanToDefaultFieldByInterface() {
         // given
         underTest = Atto.builder().loggerInstance(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto.example").build();
 
         // when
-        underTest.instance(UnambiguousAbstractHolder.class);
+        Throwable throwable = catchThrowable(() -> underTest.instance(UnambiguousAbstractHolder.class));
+
+        // then
+        assertThat(throwable).isExactlyInstanceOf(TargetNotFoundException.class);
     }
 
     @Case(11)
     @Test
-    public void shouldCreateInstanceWithCustomLogger() {
+    void shouldCreateInstanceWithCustomLogger() {
         // given
         int count = LoggerImplementation.getCount();
         underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerClass(LoggerImplementation.class).build();
@@ -320,14 +355,14 @@ public class AttoTest {
         ClassWithLogger instance = underTest.instance(ClassWithLogger.class);
 
         // then
-        assertEquals(LoggerImplementation.class, instance.getLogger().getClass());
-        assertEquals(count + 1, LoggerImplementation.getCount());
-        assertTrue(LoggerImplementation.getLogs().contains(LoggerImplementation.class.getName()));
+        assertThat(instance.getLogger()).isExactlyInstanceOf(LoggerImplementation.class);
+        assertThat(LoggerImplementation.getCount()).isEqualTo(count + 1);
+        assertThat(LoggerImplementation.getLogs()).contains(LoggerImplementation.class.getName());
     }
 
     @Case(11)
     @Test
-    public void shouldCreateInstanceWithJulLogger() {
+    void shouldCreateInstanceWithJulLogger() {
         // given
         underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerInstance(javaUtilLogger()).build();
 
@@ -335,12 +370,12 @@ public class AttoTest {
         ClassWithLogger instance = underTest.instance(ClassWithLogger.class);
 
         // then
-        assertEquals(LoggerImplementation.class, instance.getLogger().getClass());
+        assertThat(instance.getLogger()).isExactlyInstanceOf(LoggerImplementation.class);
     }
 
     @Case(12)
     @Test
-    public void shouldInjectStaticNestedClassInstance() {
+    void shouldInjectStaticNestedClassInstance() {
         // given
         underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerInstance(standardOutputLogger(ALL)).build();
 
@@ -348,14 +383,15 @@ public class AttoTest {
         StaticNestedClassInjectionExample instance = underTest.instance(StaticNestedClassInjectionExample.class);
 
         // then
-        assertNotNull(instance);
-        assertNotNull(instance.getImplementation());
-        assertEquals(StaticNestedClassImplementationHolder.StaticNestedClassImplementation.class, instance.getImplementation().getClass());
+        assertThat(instance).isNotNull();
+        assertThat(instance.getImplementation())
+                .isNotNull()
+                .isExactlyInstanceOf(StaticNestedClassImplementationHolder.StaticNestedClassImplementation.class);
     }
 
     @Case(13)
     @Test
-    public void shouldInjectInnerClassInstanceAndOuterClassField() {
+    void shouldInjectInnerClassInstanceAndOuterClassField() {
         // given
         underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerInstance(standardOutputLogger(ALL)).build();
 
@@ -363,29 +399,37 @@ public class AttoTest {
         InnerClassInjectionExample instance = underTest.instance(InnerClassInjectionExample.class);
 
         // then
-        assertNotNull(instance);
-        assertNotNull(instance.getImplementation());
-        assertEquals(InnerClassImplementationHolder.InnerClassImplementation.class, instance.getImplementation().getClass());
-        assertNotNull(InnerClassImplementationHolder.InnerClassImplementation.class.cast(instance.getImplementation()).getFieldFromOuterClass());
+        assertThat(instance).isNotNull();
+        assertThat(instance.getImplementation())
+                .isNotNull()
+                .isExactlyInstanceOf(InnerClassImplementationHolder.InnerClassImplementation.class);
+        assertThat(InnerClassImplementationHolder.InnerClassImplementation.class.cast(instance.getImplementation()).getFieldFromOuterClass()).isNotNull();
+
     }
 
     @Case(14)
-    @Test(expected = TargetNotFoundException.class)
-    public void shouldErrorOutOnNotMatchingQualifierWithoutScanning() {
+    @Test
+    void shouldErrorOutOnNotMatchingQualifierWithoutScanning() {
         // when
-        underTest.instance(MultipleNames.class);
-    }
+        Throwable throwable = catchThrowable(() -> underTest.instance(MultipleNames.class));
 
-    @Case(15)
-    @Test(expected = TargetNotFoundException.class)
-    public void shouldErrorOutOnNonAbstractSuperClassWithNotMatchingQualifierInjection() {
-        // when
-        underTest.instance(NamedClassHolder.class);
+        // then
+        assertThat(throwable).isExactlyInstanceOf(TargetNotFoundException.class);
     }
 
     @Case(15)
     @Test
-    public void shouldInjectSubClassOfNonAbstractClassWithMatchingQualifier() {
+    void shouldErrorOutOnNonAbstractSuperClassWithNotMatchingQualifierInjection() {
+        // when
+        Throwable throwable = catchThrowable(() -> underTest.instance(NamedClassHolder.class));
+
+        // then
+        assertThat(throwable).isExactlyInstanceOf(TargetNotFoundException.class);
+    }
+
+    @Case(15)
+    @Test
+    void shouldInjectSubClassOfNonAbstractClassWithMatchingQualifier() {
         // given
         underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerInstance(standardOutputLogger(ALL)).build();
 
@@ -393,21 +437,26 @@ public class AttoTest {
         NamedClassHolder instance = underTest.instance(NamedClassHolder.class);
 
         // then
-        assertNotNull(instance);
-        assertNotNull(instance.getNamedSuperClass());
-        assertEquals(NamedClass.class, instance.getNamedSuperClass().getClass());
-    }
-
-    @Case(17)
-    @Test(expected = TargetNotFoundException.class)
-    public void shouldInjectNotMatchingNonAbstractClass() {
-        // when
-        underTest.instance(PinkRequester.class);
+        assertThat(instance).isNotNull();
+        assertThat(instance.getNamedSuperClass())
+                .isNotNull()
+                .isExactlyInstanceOf(NamedClass.class);
     }
 
     @Case(17)
     @Test
-    public void shouldInjectMatchingNonAbstractClassByScanning() {
+    void shouldInjectNotMatchingNonAbstractClass() {
+        // when
+        Throwable throwable = catchThrowable(() -> underTest.instance(PinkRequester.class));
+
+        // then
+        assertThat(throwable).isExactlyInstanceOf(TargetNotFoundException.class);
+
+    }
+
+    @Case(17)
+    @Test
+    void shouldInjectMatchingNonAbstractClassByScanning() {
         // given
         underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerInstance(standardOutputLogger(ALL)).build();
 
@@ -415,14 +464,15 @@ public class AttoTest {
         PinkRequester instance = underTest.instance(PinkRequester.class);
 
         // then
-        assertNotNull(instance);
-        assertNotNull(instance.getPinkWannabe());
-        assertEquals(PinkSubClass.class, instance.getPinkWannabe().getClass());
+        assertThat(instance).isNotNull();
+        assertThat(instance.getPinkWannabe())
+                .isNotNull()
+                .isExactlyInstanceOf(PinkSubClass.class);
     }
 
     @Case(18)
     @Test
-    public void shouldInjectFollowingNamedQualifierValue() {
+    void shouldInjectFollowingNamedQualifierValue() {
         // given
         underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerInstance(standardOutputLogger(ALL)).build();
 
@@ -430,132 +480,151 @@ public class AttoTest {
         DifferentNamedValuesHolder instance = underTest.instance(DifferentNamedValuesHolder.class);
 
         // then
-        assertNotNull(instance);
-        assertNotNull(instance.getImplementationA());
-        assertNotNull(instance.getImplementationB());
-        assertEquals(ImplementationA.class, instance.getImplementationA().getClass());
-        assertEquals(ImplementationB.class, instance.getImplementationB().getClass());
+        assertThat(instance).isNotNull();
+        assertThat(instance.getImplementationA())
+                .isNotNull()
+                .isExactlyInstanceOf(ImplementationA.class);
+        assertThat(instance.getImplementationB())
+                .isNotNull()
+                .isExactlyInstanceOf(ImplementationB.class);
     }
 
     @Case(18)
-    @Test(expected = TargetNotFoundException.class)
-    public void shouldErrorOutOnNamedValuesMismatch() {
+    @Test
+    void shouldErrorOutOnNamedValuesMismatch() {
         // given
         underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerInstance(standardOutputLogger(ALL)).build();
 
         // when
-        underTest.instance(NamedValuesMismatchHolder.class);
+        Throwable throwable = catchThrowable(() -> underTest.instance(NamedValuesMismatchHolder.class));
+
+        // then
+        assertThat(throwable).isExactlyInstanceOf(TargetNotFoundException.class);
     }
 
     @Case(18)
-    @Test(expected = TargetNotFoundException.class)
-    public void shouldErrorOutOnNamedValuesMismatchWithoutScanner() {
+    @Test
+    void shouldErrorOutOnNamedValuesMismatchWithoutScanner() {
         // when
-        underTest.instance(NamedValuesMismatchHolder.class);
+        Throwable throwable = catchThrowable(() -> underTest.instance(NamedValuesMismatchHolder.class));
+
+        // then
+        assertThat(throwable).isExactlyInstanceOf(TargetNotFoundException.class);
     }
 
     @Case(19)
     @Test
-    public void shouldInjectProviderField() {
+    void shouldInjectProviderField() {
         // when
         ProviderFieldHolder instance = underTest.instance(ProviderFieldHolder.class);
 
         // then
-        assertNotNull(instance);
-        assertNotNull(instance.getProvider());
-        assertNotNull(instance.getProvider().get());
-        assertEquals(ProvidedSingleton.class, instance.getProvider().get().getClass());
-        assertSame(instance.getProvider().get(), instance.getProvider().get());
+        assertThat(instance).isNotNull();
+        assertThat(instance.getProvider()).isNotNull();
+        assertThat(instance.getProvider().get())
+                .isNotNull()
+                .isExactlyInstanceOf(ProvidedSingleton.class)
+                .isSameAs(instance.getProvider().get());
     }
 
     @Case(19)
     @Test
-    public void shouldInjectProviderByConstructor() {
+    void shouldInjectProviderByConstructor() {
         // when
         ProviderConstructorHolder instance = underTest.instance(ProviderConstructorHolder.class);
 
         // then
-        assertNotNull(instance);
-        assertNotNull(instance.getProvider());
-        assertNotNull(instance.getProvider().get());
-        assertEquals(ProvidedSingleton.class, instance.getProvider().get().getClass());
-        assertSame(instance.getProvider().get(), instance.getProvider().get());
-    }
-
-    @Case(19)
-    @Test(expected = AmbiguousTargetException.class)
-    public void shouldErrorOutOnNoTypeProviderFieldInjection() {
-        // when
-        underTest.instance(NoTypeProviderFieldHolder.class);
-    }
-
-    @Case(19)
-    @Test(expected = AmbiguousTargetException.class)
-    public void shouldErrorOutOnNoTypeProviderInjectionByConstructor() {
-        // when
-        underTest.instance(NoTypeProviderConstructorHolder.class);
+        assertThat(instance).isNotNull();
+        assertThat(instance.getProvider()).isNotNull();
+        assertThat(instance.getProvider().get())
+                .isNotNull()
+                .isExactlyInstanceOf(ProvidedSingleton.class)
+                .isSameAs(instance.getProvider().get());
     }
 
     @Case(19)
     @Test
-    public void shouldInjectWildcardProviderByField() {
+    void shouldErrorOutOnNoTypeProviderFieldInjection() {
+        // when
+        Throwable throwable = catchThrowable(() -> underTest.instance(NoTypeProviderFieldHolder.class));
+
+        // then
+        assertThat(throwable).isExactlyInstanceOf(AmbiguousTargetException.class);
+    }
+
+    @Case(19)
+    @Test
+    void shouldErrorOutOnNoTypeProviderInjectionByConstructor() {
+        // when
+        Throwable throwable = catchThrowable(() -> underTest.instance(NoTypeProviderConstructorHolder.class));
+
+        // then
+        assertThat(throwable).isExactlyInstanceOf(AmbiguousTargetException.class);
+    }
+
+    @Case(19)
+    @Test
+    void shouldInjectWildcardProviderByField() {
         // when
         WildcardProviderFieldHolder instance = underTest.instance(WildcardProviderFieldHolder.class);
 
         // then
-        assertNotNull(instance);
-        assertNotNull(instance.getProvider());
-        assertNotNull(instance.getProvider().get());
-        assertEquals(Object.class, instance.getProvider().get().getClass());
-        assertNotSame(instance.getProvider().get(), instance.getProvider().get());
+        assertThat(instance).isNotNull();
+        assertThat(instance.getProvider()).isNotNull();
+        assertThat(instance.getProvider().get())
+                .isNotNull()
+                .isExactlyInstanceOf(Object.class)
+                .isNotSameAs(instance.getProvider().get());
     }
 
     @Case(19)
     @Test
-    public void shouldInjectWildcardProviderByConstructor() {
+    void shouldInjectWildcardProviderByConstructor() {
         // when
         WildcardProviderConstructorHolder instance = underTest.instance(WildcardProviderConstructorHolder.class);
 
         // then
-        assertNotNull(instance);
-        assertNotNull(instance.getProvider());
-        assertNotNull(instance.getProvider().get());
-        assertEquals(Object.class, instance.getProvider().get().getClass());
-        assertNotSame(instance.getProvider().get(), instance.getProvider().get());
+        assertThat(instance).isNotNull();
+        assertThat(instance.getProvider()).isNotNull();
+        assertThat(instance.getProvider().get())
+                .isNotNull()
+                .isExactlyInstanceOf(Object.class)
+                .isNotSameAs(instance.getProvider().get());
     }
 
     @Case(19)
     @Test
-    public void shouldInjectUpperBoundWildcardProviderByField() {
+    void shouldInjectUpperBoundWildcardProviderByField() {
         // when
         UpperBoundWildcardProviderFieldHolder instance = underTest.instance(UpperBoundWildcardProviderFieldHolder.class);
 
         // then
-        assertNotNull(instance);
-        assertNotNull(instance.getProvider());
-        assertNotNull(instance.getProvider().get());
-        assertEquals(ProvidedSingleton.class, instance.getProvider().get().getClass());
-        assertSame(instance.getProvider().get(), instance.getProvider().get());
+        assertThat(instance).isNotNull();
+        assertThat(instance.getProvider()).isNotNull();
+        assertThat(instance.getProvider().get())
+                .isNotNull()
+                .isExactlyInstanceOf(ProvidedSingleton.class)
+                .isSameAs(instance.getProvider().get());
     }
 
     @Case(19)
     @Test
-    public void shouldInjectUpperBoundWildcardProviderByConstructor() {
+    void shouldInjectUpperBoundWildcardProviderByConstructor() {
         // when
         UpperBoundWildcardProviderConstructorHolder instance = underTest.instance(UpperBoundWildcardProviderConstructorHolder.class);
 
         // then
-        // then
-        assertNotNull(instance);
-        assertNotNull(instance.getProvider());
-        assertNotNull(instance.getProvider().get());
-        assertEquals(ProvidedSingleton.class, instance.getProvider().get().getClass());
-        assertSame(instance.getProvider().get(), instance.getProvider().get());
+        assertThat(instance).isNotNull();
+        assertThat(instance.getProvider()).isNotNull();
+        assertThat(instance.getProvider().get())
+                .isNotNull()
+                .isExactlyInstanceOf(ProvidedSingleton.class)
+                .isSameAs(instance.getProvider().get());
     }
 
     @Case(19)
     @Test
-    public void shouldInjectSpecificUpperBoundWildcardProviderByField() {
+    void shouldInjectSpecificUpperBoundWildcardProviderByField() {
         // given
         underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerInstance(standardOutputLogger(ALL)).build();
 
@@ -563,16 +632,17 @@ public class AttoTest {
         SpecificUpperBoundWildcardProviderFieldHolder instance = underTest.instance(SpecificUpperBoundWildcardProviderFieldHolder.class);
 
         // then
-        assertNotNull(instance);
-        assertNotNull(instance.getProvider());
-        assertNotNull(instance.getProvider().get());
-        assertEquals(SpecificProvidedSingleton.class, instance.getProvider().get().getClass());
-        assertSame(instance.getProvider().get(), instance.getProvider().get());
+        assertThat(instance).isNotNull();
+        assertThat(instance.getProvider()).isNotNull();
+        assertThat(instance.getProvider().get())
+                .isNotNull()
+                .isExactlyInstanceOf(SpecificProvidedSingleton.class)
+                .isSameAs(instance.getProvider().get());
     }
 
     @Case(19)
     @Test
-    public void shouldInjectSpecificUpperBoundWildcardProviderByConstructor() {
+    void shouldInjectSpecificUpperBoundWildcardProviderByConstructor() {
         // given
         underTest = Atto.builder().scanPackage("com.nilcaream.atto.example").loggerInstance(standardOutputLogger(ALL)).build();
 
@@ -580,18 +650,22 @@ public class AttoTest {
         SpecificUpperBoundWildcardProviderConstructorHolder instance = underTest.instance(SpecificUpperBoundWildcardProviderConstructorHolder.class);
 
         // then
-        assertNotNull(instance);
-        assertNotNull(instance.getProvider());
-        assertNotNull(instance.getProvider().get());
-        assertEquals(SpecificProvidedSingleton.class, instance.getProvider().get().getClass());
-        assertSame(instance.getProvider().get(), instance.getProvider().get());
+        assertThat(instance).isNotNull();
+        assertThat(instance.getProvider()).isNotNull();
+        assertThat(instance.getProvider().get())
+                .isNotNull()
+                .isExactlyInstanceOf(SpecificProvidedSingleton.class)
+                .isSameAs(instance.getProvider().get());
     }
 
-    @Test(expected = ReflectionsNotFoundException.class)
-    public void shouldBeUnavailableForMissingReflections() {
+    @Test
+    void shouldBeUnavailableForMissingReflections() {
         runWithReflectionsDisabled(() -> {
             // when
-            Atto.builder().loggerInstance(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto").build();
+            Throwable throwable = catchThrowable(() -> Atto.builder().loggerInstance(standardOutputLogger(ALL)).scanPackage("com.nilcaream.atto").build());
+
+            // then
+            assertThat(throwable).isExactlyInstanceOf(ReflectionsNotFoundException.class);
         });
     }
 }

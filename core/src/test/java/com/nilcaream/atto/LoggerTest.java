@@ -1,11 +1,11 @@
 package com.nilcaream.atto;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class LoggerTest {
+class LoggerTest {
 
     @Test
-    public void shouldCreateJulLogger() {
+    void shouldCreateJulLogger() {
         // given
         Logger logger = Logger.javaUtilLogger();
 
@@ -14,7 +14,7 @@ public class LoggerTest {
     }
 
     @Test
-    public void shouldCreateSoutLogger() {
+    void shouldCreateSoutLogger() {
         // given
         Logger logger = Logger.standardOutputLogger();
 

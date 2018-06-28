@@ -1,25 +1,20 @@
 package com.nilcaream.atto;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Test;
 
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-@RunWith(MockitoJUnitRunner.class)
-public class LoggerWrapperTest {
-
-    @Mock
-    private Logger implementation;
+class LoggerWrapperTest {
 
     private LoggerWrapper underTest = new LoggerWrapper();
 
     @Test
-    public void shouldDelegateToImplementation() {
+    void shouldDelegateToImplementation() {
         // given
+        Logger implementation = mock(Logger.class);
         underTest.setImplementation(implementation);
 
         // when

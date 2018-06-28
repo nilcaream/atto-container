@@ -124,10 +124,12 @@ class Injector {
         while (currentCls != null) {
             for (Field field : currentCls.getDeclaredFields()) {
                 if (field.isAnnotationPresent(Inject.class)) {
-                    field.setAccessible(true);
-                    if ((isStatic(field.getModifiers()) && field.get(instance) == null) || (!isStatic(field.getModifiers()) && instance != null && field.get(instance) == null)) {
-                        results.add(field);
-                        logger.debug("Field %s is null", field.getGenericType());
+                    if (isStatic(field.getModifiers()) || (!isStatic(field.getModifiers()) && instance != null)) {
+                        field.setAccessible(true);
+                        if (field.get(instance) == null) {
+                            results.add(field);
+                            logger.debug("Field %s is null", field.toGenericString());
+                        }
                     }
                 }
             }
